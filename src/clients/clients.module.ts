@@ -6,8 +6,8 @@ import { Client } from './entities/clients.entity';
 import { Maintenance } from '../maintenance/entities/maintenance.entity';
 import { MaintenanceProduct } from '../maintenance/entities/maintenance-product.entity';
 import { Product } from '../products/entities/product.entity';
-import { Repair } from '@repairs/entities/repair.entity';
-import { Revestimiento } from '@revestimientos/entities/revestimiento.entity';
+import { Repair } from '../repairs/entities/repair.entity';
+import { Revestimiento } from '../revestimientos/entities/revestimiento.entity';
 
 @Module({
   providers: [ClientsService],

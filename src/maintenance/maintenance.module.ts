@@ -5,8 +5,8 @@ import { Client } from '../clients/entities/clients.entity';
 import { Maintenance } from '../maintenance/entities/maintenance.entity';
 import { MaintenanceProduct } from '../maintenance/entities/maintenance-product.entity';
 import { Product } from '../products/entities/product.entity';
-import { Repair } from '@repairs/entities/repair.entity';
-import { Revestimiento } from '@revestimientos/entities/revestimiento.entity';
+import { Repair } from '../repairs/entities/repair.entity';
+import { Revestimiento } from '../revestimientos/entities/revestimiento.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 @Module({
