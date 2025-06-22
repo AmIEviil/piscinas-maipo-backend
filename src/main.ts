@@ -7,8 +7,8 @@ async function bootstrap() {
 
   app.enableCors({
     origin: [
-      'https://piscinas-maipo-frontend.vercel.app/',
-      process.env.FRONTEND_URl,
+      process.env.FRONTEND_URL,
+      'http://localhost:5173', // para desarrollo
     ],
     credentials: true,
   });
