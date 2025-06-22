@@ -6,6 +6,7 @@ import {
   Delete,
   Param,
   Body,
+  Query,
 } from '@nestjs/common';
 import { ClientsService } from './clients.service';
 import { Client } from './entities/clients.entity';
@@ -19,17 +20,32 @@ export class ClientsController {
     return this.clientService.findAll();
   }
 
+  @Get('filter')
+  getClients(
+    @Query('nombre') nombre?: string,
+    @Query('direccion') direccion?: string,
+    @Query('comuna') comuna?: string,
+    @Query('dia') dia?: string,
+  ) {
+    return this.clientService.findByFilters({
+      nombre,
+      direccion,
+      comuna,
+      dia,
+    });
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string): Promise<Client> {
     return this.clientService.findOne(+id);
   }
 
-  @Post()
+  @Post('create')
   create(@Body() client: Partial<Client>): Promise<Client> {
     return this.clientService.createClient(client);
   }
 
-  @Put(':id')
+  @Put('update/:id')
   update(
     @Param('id') id: string,
     @Body() client: Partial<Client>,
@@ -37,7 +53,7 @@ export class ClientsController {
     return this.clientService.update(+id, client);
   }
 
-  @Delete(':id')
+  @Delete('delete/:id')
   remove(@Param('id') id: string): Promise<void> {
     return this.clientService.remove(+id);
   }

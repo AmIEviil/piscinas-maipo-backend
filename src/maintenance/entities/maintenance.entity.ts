@@ -6,7 +6,7 @@ import {
   OneToMany,
   JoinColumn,
 } from 'typeorm';
-import { Client } from './clients.entity';
+import { Client } from '../../clients/entities/clients.entity';
 import { MaintenanceProduct } from './maintenance-product.entity';
 
 @Entity()
@@ -15,7 +15,7 @@ export class Maintenance {
   id: number;
 
   @Column({ name: 'fecha_mantencion', type: 'date' })
-  fechaMantencion: string;
+  fechaMantencion: Date;
 
   @Column({ name: 'cant_bidones', type: 'int' })
   cantBidones: number;

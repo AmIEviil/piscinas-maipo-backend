@@ -1,5 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
-import { MaintenanceProduct } from './maintenance-product.entity';
+import { MaintenanceProduct } from '../../maintenance/entities/maintenance-product.entity';
 
 @Entity()
 export class Product {
@@ -9,8 +9,11 @@ export class Product {
   @Column()
   nombre: string;
 
-  @Column({ name: 'valor_unitario', type: 'decimal' })
-  valorUnitario: number;
+  @Column({ nullable: true, type: 'int', default: 0 })
+  valor_unitario: number;
+
+  @Column({ nullable: true, type: 'int', default: 0 })
+  cant_disponible: number;
 
   @OneToMany(() => MaintenanceProduct, (mp) => mp.product)
   mantenimientos: MaintenanceProduct[];

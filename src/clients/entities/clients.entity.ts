@@ -1,5 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
-import { Maintenance } from './maintenance.entity';
+import { Maintenance } from '../../maintenance/entities/maintenance.entity';
+import { Repair } from '../../repairs/entities/repair.entity';
+import { Revestimiento } from '../../revestimientos/entities/revestimiento.entity';
 
 @Entity()
 export class Client {
@@ -21,12 +23,24 @@ export class Client {
   @Column({ nullable: true })
   email: string;
 
-  @Column({ name: 'dia_mantencion' })
-  diaMantencion: string;
+  @Column({ nullable: true, type: 'date' })
+  fecha_ingreso: Date;
 
-  @Column('decimal', { name: 'valor_mantencion' })
-  valorMantencion: number;
+  @Column()
+  tipo_piscina: string;
+
+  @Column({ name: 'dia_mantencion' })
+  dia_mantencion: string;
+
+  @Column({ name: 'valor_mantencion', type: 'int' })
+  valor_mantencion: number;
 
   @OneToMany(() => Maintenance, (m) => m.client)
   mantenciones: Maintenance[];
+
+  @OneToMany(() => Repair, (r) => r.client)
+  reparaciones: Repair[];
+
+  @OneToMany(() => Revestimiento, (r) => r.client)
+  revestimientos: Revestimiento[];
 }
