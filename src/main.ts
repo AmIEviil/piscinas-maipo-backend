@@ -6,7 +6,10 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   app.enableCors({
-    origin: process.env.FRONTEND_URl,
+    origin: [
+      'https://piscinas-maipo-frontend.vercel.app/',
+      process.env.FRONTEND_URl,
+    ],
     credentials: true,
   });
 
