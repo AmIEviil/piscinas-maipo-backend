@@ -43,14 +43,17 @@ async function seed() {
   const productTypeRepo = AppDataSource.getRepository(ProductType);
 
   console.log('🧹 Limpiando tablas...');
-  await maintenanceProductRepo.delete({});
-  await maintenanceRepo.delete({});
-  await repairRepo.delete({});
-  await extraRevestimientoRepo.delete({});
-  await revestimientoRepo.delete({});
-  await productRepo.delete({});
-  await clientRepo.delete({});
-  await productTypeRepo.delete({});
+  // Eliminar solo si hay datos en las tablas
+  if (await maintenanceProductRepo.count())
+    await maintenanceProductRepo.delete({});
+  if (await maintenanceRepo.count()) await maintenanceRepo.delete({});
+  if (await repairRepo.count()) await repairRepo.delete({});
+  if (await extraRevestimientoRepo.count())
+    await extraRevestimientoRepo.delete({});
+  if (await revestimientoRepo.count()) await revestimientoRepo.delete({});
+  if (await productRepo.count()) await productRepo.delete({});
+  if (await clientRepo.count()) await clientRepo.delete({});
+  if (await productTypeRepo.count()) await productTypeRepo.delete({});
 
   console.log('⏳ Insertando datos de prueba...');
 
