@@ -6,6 +6,7 @@ import { MaintenanceProduct } from './maintenance/entities/maintenance-product.e
 import { Revestimiento } from './revestimientos/entities/revestimiento.entity';
 import { ExtraRevestimiento } from './revestimientos/entities/extra-revestimiento.entity';
 import { Repair } from './repairs/entities/repair.entity';
+import { ProductType } from './products/entities/product-type';
 
 export const AppDataSource = new DataSource({
   type: 'postgres',
@@ -14,7 +15,7 @@ export const AppDataSource = new DataSource({
   username: 'postgres',
   password: 'Holitas.01',
   database: 'piscinasElMaipo',
-  synchronize: false,
+  synchronize: true,
   entities: [
     Product,
     Client,
@@ -23,6 +24,7 @@ export const AppDataSource = new DataSource({
     Revestimiento,
     ExtraRevestimiento,
     Repair,
+    ProductType,
   ],
   migrations: ['src/migrations/*.ts'],
 });

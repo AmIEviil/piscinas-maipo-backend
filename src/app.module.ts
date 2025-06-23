@@ -25,6 +25,7 @@ import { RevestimientosModule } from './revestimientos/revestimientos.module';
       database: process.env.DB_NAME,
       autoLoadEntities: true,
       synchronize: true, // Solo en desarrollo
+      migrationsRun: true,
     }),
     UsersModule,
     ClientsModule,

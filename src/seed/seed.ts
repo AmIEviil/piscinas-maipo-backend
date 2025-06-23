@@ -6,14 +6,15 @@ import { MaintenanceProduct } from '../maintenance/entities/maintenance-product.
 import { Repair } from '../repairs/entities/repair.entity';
 import { Revestimiento } from '../revestimientos/entities/revestimiento.entity';
 import { ExtraRevestimiento } from '../revestimientos/entities/extra-revestimiento.entity';
+import { ProductType } from '../products/entities/product-type';
 
 const AppDataSource = new DataSource({
   type: 'postgres',
-  host: 'localhost',
-  port: 5432,
-  username: 'postgres',
-  password: 'Holitas.01',
-  database: 'piscinasElMaipo',
+  host: process.env.DB_HOST,
+  port: parseInt(process.env.DB_PORT || '5432'),
+  username: process.env.DB_USERNAME,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
   synchronize: false,
   entities: [
     Client,
@@ -23,6 +24,7 @@ const AppDataSource = new DataSource({
     Repair,
     Revestimiento,
     ExtraRevestimiento,
+    ProductType,
   ],
 });
 
@@ -38,108 +40,131 @@ async function seed() {
   const revestimientoRepo = AppDataSource.getRepository(Revestimiento);
   const extraRevestimientoRepo =
     AppDataSource.getRepository(ExtraRevestimiento);
+  const productTypeRepo = AppDataSource.getRepository(ProductType);
+
+  console.log('🧹 Limpiando tablas...');
+  await maintenanceProductRepo.delete({});
+  await maintenanceRepo.delete({});
+  await repairRepo.delete({});
+  await extraRevestimientoRepo.delete({});
+  await revestimientoRepo.delete({});
+  await productRepo.delete({});
+  await clientRepo.delete({});
+  await productTypeRepo.delete({});
 
   console.log('⏳ Insertando datos de prueba...');
 
-  // Cliente
-  const cliente = await clientRepo.save(
-    clientRepo.create({
-      nombre: 'Carlos Ramírez',
-      direccion: 'Camino del Bosque 456',
-      comuna: 'La Reina',
-      telefono: '987654321',
-      email: 'carlos@example.com',
-      fecha_ingreso: new Date('2023-11-15'),
-      tipo_piscina: 'Hormigón',
-      dia_mantencion: 'Martes',
-      valor_mantencion: 30000,
-    }),
-  );
-
-  // Productos
-  const productos = await productRepo.save([
-    productRepo.create({
-      nombre: 'Tabletas',
-      valor_unitario: 3000,
-      cant_disponible: 50,
-    }),
-    productRepo.create({
-      nombre: 'Cloro Granulado 1KG',
-      valor_unitario: 5500,
-      cant_disponible: 30,
-    }),
+  // Crear tipos de productos
+  const tiposProducto = await productTypeRepo.save([
+    { nombre: 'Liquido' },
+    { nombre: 'Tableta' },
+    { nombre: 'Granulado' },
+    { nombre: 'Otros' },
   ]);
 
-  // Mantención
-  const mantencion = await maintenanceRepo.save(
-    maintenanceRepo.create({
-      fechaMantencion: new Date(),
-      cantBidones: 1,
-      cantTabletas: 2,
-      otros: 'Limpieza general',
-      realizada: true,
-      recibioPago: false,
-      client: cliente,
+  // Crear productos para cada tipo
+  const productos = await Promise.all(
+    tiposProducto.map((tipo) => {
+      const nombre =
+        tipo.nombre === 'Otros'
+          ? 'Sube PH'
+          : `Cloro ${tipo.nombre} ${tipo.nombre === 'Liquido' ? '1LT' : tipo.nombre === 'Granulado' ? '1KG' : ''}`;
+      return productRepo.save(
+        productRepo.create({
+          tipo,
+          nombre,
+          valor_unitario: 4000 + Math.floor(Math.random() * 2000),
+          cant_disponible: 50 + Math.floor(Math.random() * 30),
+        }),
+      );
     }),
   );
 
-  // Productos usados en mantención
-  await maintenanceProductRepo.save([
-    maintenanceProductRepo.create({
-      maintenance: mantencion,
-      product: productos[0],
-      cantidad: 3,
-    }),
-    maintenanceProductRepo.create({
-      maintenance: mantencion,
-      product: productos[1],
-      cantidad: 1,
-    }),
-  ]);
+  // Crear 5 clientes
+  for (let i = 1; i <= 5; i++) {
+    const cliente = await clientRepo.save(
+      clientRepo.create({
+        nombre: `Cliente ${i}`,
+        direccion: `Calle Falsa ${i * 100}`,
+        comuna: 'Ñuñoa',
+        telefono: `91234567${i}`,
+        email: `cliente${i}@mail.com`,
+        fecha_ingreso: new Date(2025, 6 - i, 23), // Ej: Junio, Mayo, etc.
+        tipo_piscina: i % 2 === 0 ? 'Fibra' : 'Hormigón',
+        dia_mantencion: 'Miércoles',
+        valor_mantencion: 25000 + i * 1000,
+      }),
+    );
 
-  // Reparación
-  await repairRepo.save(
-    repairRepo.create({
-      client: cliente,
-      fechaTrabajo: new Date('2024-05-20'),
-      detalles: 'Reparación de bomba de filtrado',
-      materiales: 'Bomba 1HP, PVC',
-      garantia: '6 meses',
-    }),
-  );
+    // Mantención
+    const mantencion = await maintenanceRepo.save(
+      maintenanceRepo.create({
+        fechaMantencion: new Date(),
+        cantBidones: 1,
+        cantTabletas: 2,
+        otros: 'Mantención mensual',
+        realizada: true,
+        recibioPago: true,
+        client: cliente,
+      }),
+    );
 
-  // Revestimiento
-  const revestimiento = await revestimientoRepo.save(
-    revestimientoRepo.create({
-      client: cliente,
-      fechaPropuesta: new Date('2024-10-01'),
-      fechaTrabajo: new Date('2024-10-15'),
-      largoPiscina: 8,
-      anchoPiscina: 4,
-      profundidadMin: 1.2,
-      profundidadMax: 2.0,
-      profundidadAvg: 1.6,
-      detalles: 'Revestimiento con fibra de vidrio azul',
-      garantia: '10 años',
-      valor: 3500000,
-    }),
-  );
+    await maintenanceProductRepo.save([
+      {
+        maintenance: mantencion,
+        product: productos[0],
+        cantidad: 1,
+      },
+      {
+        maintenance: mantencion,
+        product: productos[1],
+        cantidad: 2,
+      },
+    ]);
 
-  // Extra del revestimiento
-  await extraRevestimientoRepo.save(
-    extraRevestimientoRepo.create({
-      revestimiento: revestimiento,
-      nombre: 'Desmonte de árbol',
-      valor: 120000,
-      detalle: 'Remoción de árbol que interfería con la piscina',
-    }),
-  );
+    // Reparación
+    await repairRepo.save(
+      repairRepo.create({
+        client: cliente,
+        fechaTrabajo: new Date(2025, 5, 15),
+        detalles: 'Cambio de filtro',
+        materiales: 'Filtro nuevo, PVC',
+        garantia: '3 meses',
+      }),
+    );
 
-  console.log('✅ Datos insertados con éxito.');
+    // Revestimiento
+    const revestimiento = await revestimientoRepo.save(
+      revestimientoRepo.create({
+        client: cliente,
+        fechaPropuesta: new Date(2025, 3, 1),
+        fechaTrabajo: new Date(2025, 3, 10),
+        largoPiscina: 7 + i,
+        anchoPiscina: 3 + i,
+        profundidadMin: 1.2,
+        profundidadMax: 2.0,
+        profundidadAvg: 1.6,
+        detalles: `Revestimiento azul cliente ${i}`,
+        garantia: '5 años',
+        valor: 3000000 + i * 100000,
+      }),
+    );
+
+    await extraRevestimientoRepo.save(
+      extraRevestimientoRepo.create({
+        revestimiento: revestimiento,
+        nombre: 'Extra trabajo',
+        valor: 100000 + i * 10000,
+        detalle: 'Trabajo adicional',
+      }),
+    );
+  }
+
+  console.log('✅ Seed ejecutado con éxito.');
   await AppDataSource.destroy();
 }
 
-seed().catch((err) => {
-  console.error('❌ Error durante el seed:', err);
+seed().catch((e) => {
+  console.error('❌ Error en seed:', e);
   AppDataSource.destroy();
 });
