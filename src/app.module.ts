@@ -9,6 +9,7 @@ import { MaintenanceModule } from './maintenance/maintenance.module';
 import { ProductsModule } from './products/products.module';
 import { RepairsModule } from './repairs/repairs.module';
 import { RevestimientosModule } from './revestimientos/revestimientos.module';
+import { MetricsModule } from './metrics/metrics.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { RevestimientosModule } from './revestimientos/revestimientos.module';
     ProductsModule,
     RepairsModule,
     RevestimientosModule,
+    MetricsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

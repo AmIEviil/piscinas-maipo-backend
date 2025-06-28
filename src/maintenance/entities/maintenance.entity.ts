@@ -32,6 +32,9 @@ export class Maintenance {
   @Column({ name: 'recibio_pago', type: 'boolean' })
   recibioPago: boolean;
 
+  @Column({ name: 'valor_mantencion', type: 'int' })
+  valorMantencion: number;
+
   @ManyToOne(() => Client, (c) => c.mantenciones, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'client_id' })
   client: Client;

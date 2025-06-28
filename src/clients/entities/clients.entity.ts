@@ -1,7 +1,15 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  OneToMany,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
 import { Maintenance } from '../../maintenance/entities/maintenance.entity';
 import { Repair } from '../../repairs/entities/repair.entity';
 import { Revestimiento } from '../../revestimientos/entities/revestimiento.entity';
+import { MaintenanceTemporality } from './frecuency-maintenance';
 
 @Entity()
 export class Client {
@@ -34,6 +42,10 @@ export class Client {
 
   @Column({ name: 'valor_mantencion', type: 'int' })
   valor_mantencion: number;
+
+  @ManyToOne(() => MaintenanceTemporality, (t) => t.clientes, { eager: true })
+  @JoinColumn({ name: 'frequencia_mantencion_id' })
+  frequencia_mantencion: MaintenanceTemporality;
 
   @OneToMany(() => Maintenance, (m) => m.client)
   mantenciones: Maintenance[];

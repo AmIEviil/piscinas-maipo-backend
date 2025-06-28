@@ -7,6 +7,10 @@ import { Repair } from '../repairs/entities/repair.entity';
 import { Revestimiento } from '../revestimientos/entities/revestimiento.entity';
 import { ExtraRevestimiento } from '../revestimientos/entities/extra-revestimiento.entity';
 import { ProductType } from '../products/entities/product-type';
+import { MaintenanceTemporality } from '../clients/entities/frecuency-maintenance';
+
+import * as dotenv from 'dotenv';
+dotenv.config();
 
 const AppDataSource = new DataSource({
   type: 'postgres',
@@ -25,6 +29,7 @@ const AppDataSource = new DataSource({
     Revestimiento,
     ExtraRevestimiento,
     ProductType,
+    MaintenanceTemporality,
   ],
 });
 
@@ -41,19 +46,9 @@ async function seed() {
   const extraRevestimientoRepo =
     AppDataSource.getRepository(ExtraRevestimiento);
   const productTypeRepo = AppDataSource.getRepository(ProductType);
-
-  // console.log('🧹 Limpiando tablas...');
-  // // Eliminar solo si hay datos en las tablas
-  // if (await maintenanceProductRepo.count())
-  //   await maintenanceProductRepo.delete({});
-  // if (await maintenanceRepo.count()) await maintenanceRepo.delete({});
-  // if (await repairRepo.count()) await repairRepo.delete({});
-  // if (await extraRevestimientoRepo.count())
-  //   await extraRevestimientoRepo.delete({});
-  // if (await revestimientoRepo.count()) await revestimientoRepo.delete({});
-  // if (await productRepo.count()) await productRepo.delete({});
-  // if (await clientRepo.count()) await clientRepo.delete({});
-  // if (await productTypeRepo.count()) await productTypeRepo.delete({});
+  const maintenanceFrecuencyRepo = AppDataSource.getRepository(
+    MaintenanceTemporality,
+  );
 
   console.log('⏳ Insertando datos de prueba...');
 
@@ -83,6 +78,14 @@ async function seed() {
     }),
   );
 
+  await maintenanceFrecuencyRepo.save(
+    maintenanceFrecuencyRepo.create([
+      { nombre: 'Semanal' },
+      { nombre: 'Quincenal' },
+      { nombre: 'Mensual' },
+    ]),
+  );
+
   // Crear 5 clientes
   for (let i = 1; i <= 5; i++) {
     const cliente = await clientRepo.save(
@@ -109,6 +112,7 @@ async function seed() {
         realizada: true,
         recibioPago: true,
         client: cliente,
+        valorMantencion: cliente.valor_mantencion,
       }),
     );
 

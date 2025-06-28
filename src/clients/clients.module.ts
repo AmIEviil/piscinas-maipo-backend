@@ -8,6 +8,7 @@ import { MaintenanceProduct } from '../maintenance/entities/maintenance-product.
 import { Product } from '../products/entities/product.entity';
 import { Repair } from '../repairs/entities/repair.entity';
 import { Revestimiento } from '../revestimientos/entities/revestimiento.entity';
+import { MaintenanceTemporality } from './entities/frecuency-maintenance';
 
 @Module({
   providers: [ClientsService],
@@ -16,6 +17,7 @@ import { Revestimiento } from '../revestimientos/entities/revestimiento.entity';
     TypeOrmModule.forFeature([
       Client,
       Maintenance,
+      MaintenanceTemporality,
       MaintenanceProduct,
       Product,
       Repair,

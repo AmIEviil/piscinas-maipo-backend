@@ -7,6 +7,10 @@ import { Revestimiento } from './revestimientos/entities/revestimiento.entity';
 import { ExtraRevestimiento } from './revestimientos/entities/extra-revestimiento.entity';
 import { Repair } from './repairs/entities/repair.entity';
 import { ProductType } from './products/entities/product-type';
+import { MaintenanceTemporality } from './clients/entities/frecuency-maintenance';
+
+import * as dotenv from 'dotenv';
+dotenv.config();
 
 export const AppDataSource = new DataSource({
   type: 'postgres',
@@ -25,6 +29,7 @@ export const AppDataSource = new DataSource({
     ExtraRevestimiento,
     Repair,
     ProductType,
+    MaintenanceTemporality,
   ],
   migrations: ['src/migrations/*.ts'],
 });
