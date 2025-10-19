@@ -11,12 +11,10 @@ export class ClientsService {
   ) {}
 
   findAll(): Promise<Client[]> {
-    console.log('🧪 Entró al método findAll');
     return this.clientRepository.find();
   }
 
   async findOne(id: number): Promise<Client> {
-    console.log('🧪 Entró al método findOne');
     const client = await this.clientRepository.findOneBy({ id });
     if (!client) {
       throw new NotFoundException(`client with id ${id} not found`);
@@ -25,13 +23,11 @@ export class ClientsService {
   }
 
   async createClient(client: Partial<Client>): Promise<Client> {
-    console.log('🆕 Entró al método creatClient');
     const newClient = this.clientRepository.create(client);
     return this.clientRepository.save(newClient);
   }
 
   async update(id: number, Client: Partial<Client>): Promise<Client> {
-    console.log('🆙 Entró al método update');
     const existing = await this.clientRepository.findOneBy({ id });
     if (!existing) throw new NotFoundException('Client not found');
 
@@ -40,7 +36,6 @@ export class ClientsService {
   }
 
   async remove(id: number): Promise<void> {
-    console.log('🚮 Entró al método remove');
     const result = await this.clientRepository.delete(id);
     if (result.affected === 0) throw new NotFoundException('Client not found');
   }
@@ -51,8 +46,6 @@ export class ClientsService {
     comuna?: string;
     dia?: string;
   }) {
-    console.log('🎯 findByFilters:', filters);
-
     const query = this.clientRepository.createQueryBuilder('client');
 
     if (filters.nombre) {
@@ -74,7 +67,9 @@ export class ClientsService {
     }
 
     if (filters.dia) {
-      query.andWhere('client.dia_mantencion = :dia', { dia: filters.dia });
+      query.andWhere('client.dia_mantencion ILIKE :dia', {
+        dia: `%${filters.dia}%`,
+      });
     }
 
     return query.getMany();

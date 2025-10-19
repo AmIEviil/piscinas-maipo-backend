@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 import { MaintenanceService } from './maintenance.service';
 import { Maintenance } from './entities/maintenance.entity';
+import { CreateMaintenanceDto } from './dto/CreateMaintenanceDto';
 
 @Controller('maintenances')
 export class MaintenanceController {
@@ -24,8 +25,8 @@ export class MaintenanceController {
   }
 
   @Post()
-  create(@Body() maintenance: Partial<Maintenance>): Promise<Maintenance> {
-    return this.maintenanceService.createMaintenance(maintenance);
+  create(@Body() dto: CreateMaintenanceDto) {
+    return this.maintenanceService.createMaintenance(dto);
   }
 
   @Put(':id')

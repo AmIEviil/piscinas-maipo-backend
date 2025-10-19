@@ -1,3 +1,4 @@
+import * as dotenv from 'dotenv';
 import { DataSource } from 'typeorm';
 import { Client } from './clients/entities/clients.entity';
 import { Product } from './products/entities/product.entity';
@@ -8,8 +9,10 @@ import { ExtraRevestimiento } from './revestimientos/entities/extra-revestimient
 import { Repair } from './repairs/entities/repair.entity';
 import { ProductType } from './products/entities/product-type';
 import { MaintenanceTemporality } from './clients/entities/frecuency-maintenance';
+import { User } from './users/entities/user.entity';
+import { Role } from './users/entities/role.entity';
+import { RoleUser } from './users/entities/role-user.entity';
 
-import * as dotenv from 'dotenv';
 dotenv.config();
 
 export const AppDataSource = new DataSource({
@@ -30,6 +33,9 @@ export const AppDataSource = new DataSource({
     Repair,
     ProductType,
     MaintenanceTemporality,
+    User,
+    Role,
+    RoleUser,
   ],
   migrations: ['src/migrations/*.ts'],
 });

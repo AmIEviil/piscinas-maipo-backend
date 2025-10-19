@@ -17,15 +17,6 @@ export class Maintenance {
   @Column({ name: 'fecha_mantencion', type: 'date' })
   fechaMantencion: Date;
 
-  @Column({ name: 'cant_bidones', type: 'int' })
-  cantBidones: number;
-
-  @Column({ name: 'cant_tabletas', type: 'int' })
-  cantTabletas: number;
-
-  @Column('text', { nullable: true })
-  otros: string;
-
   @Column({ type: 'boolean' })
   realizada: boolean;
 
@@ -33,7 +24,7 @@ export class Maintenance {
   recibioPago: boolean;
 
   @Column({ name: 'valor_mantencion', type: 'int' })
-  valorMantencion: number;
+  valor_mantencion: number;
 
   @ManyToOne(() => Client, (c) => c.mantenciones, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'client_id' })

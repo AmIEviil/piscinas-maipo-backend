@@ -1,21 +1,14 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  JoinColumn,
-  OneToOne,
-  Column,
-} from 'typeorm';
-import { User } from './user.entity';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
+import { RoleUser } from './role-user.entity';
 
-@Entity('role_users')
-export class RoleUser {
-  @PrimaryGeneratedColumn()
-  id: number;
+@Entity('roles')
+export class Role {
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
-  @OneToOne(() => User, (user) => user.roleUser, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'user_id' })
-  user: User;
-
-  @Column('text')
+  @Column('text', { unique: true })
   nombre: string;
+
+  @OneToMany(() => RoleUser, (roleUser) => roleUser.role)
+  roleUsers: RoleUser[];
 }

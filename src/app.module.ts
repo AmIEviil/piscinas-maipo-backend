@@ -10,6 +10,8 @@ import { ProductsModule } from './products/products.module';
 import { RepairsModule } from './repairs/repairs.module';
 import { RevestimientosModule } from './revestimientos/revestimientos.module';
 import { MetricsModule } from './metrics/metrics.module';
+import { AuthModule } from './auth/auth.module';
+import { HttpModule } from '@nestjs/axios';
 
 @Module({
   imports: [
@@ -35,6 +37,8 @@ import { MetricsModule } from './metrics/metrics.module';
     RepairsModule,
     RevestimientosModule,
     MetricsModule,
+    AuthModule,
+    HttpModule,
   ],
   controllers: [AppController],
   providers: [AppService],

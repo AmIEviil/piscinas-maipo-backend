@@ -2,6 +2,8 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Maintenance } from './entities/maintenance.entity';
+import { CreateMaintenanceDto } from './dto/CreateMaintenanceDto';
+import { MaintenanceProduct } from './entities/maintenance-product.entity';
 
 @Injectable()
 export class MaintenanceService {
@@ -22,11 +24,39 @@ export class MaintenanceService {
     return maintenance;
   }
 
-  async createMaintenance(
-    maintenance: Partial<Maintenance>,
-  ): Promise<Maintenance> {
-    const newMaintenance = this.maintenanceRepository.create(maintenance);
-    return this.maintenanceRepository.save(newMaintenance);
+  async createMaintenance(dto: CreateMaintenanceDto) {
+    console.log('Creating maintenance with DTO:', dto);
+    return this.maintenanceRepository.manager.transaction(async (manager) => {
+      // Crear mantención
+      const newMaintenance = this.maintenanceRepository.create({
+        fechaMantencion: dto.fechaMantencion,
+        realizada: dto.realizada,
+        recibioPago: dto.recibioPago,
+        valor_mantencion: dto.valorMantencion,
+        client: { id: dto.client.id },
+      });
+
+      await manager.save(newMaintenance);
+
+      // Crear productos asociados
+      if (dto.productosUsados && dto.productosUsados.length > 0) {
+        const productsToInsert = dto.productosUsados.map((p) =>
+          manager.create(MaintenanceProduct, {
+            maintenance: newMaintenance,
+            product: { id: p.productId },
+            cantidad: p.cantidad,
+          }),
+        );
+
+        await manager.save(productsToInsert);
+      }
+
+      // Retornar mantención con productos
+      return manager.findOne(Maintenance, {
+        where: { id: newMaintenance.id },
+        relations: ['productos', 'productos.product', 'client'],
+      });
+    });
   }
 
   async update(
