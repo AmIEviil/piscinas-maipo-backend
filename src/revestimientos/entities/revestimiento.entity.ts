@@ -39,14 +39,44 @@ export class Revestimiento {
   @Column('float')
   profundidadAvg: number;
 
-  @Column('text')
-  detalles: string;
+  @Column('float')
+  areaPiscina: number;
 
-  @Column('text')
-  garantia: string;
+  @Column('float')
+  volumenPiscina: number;
+
+  @Column()
+  tipoRevestimiento: string;
+
+  @Column('float')
+  valorM2: number;
 
   @Column('int')
-  valor: number;
+  costoManoObra: number;
+
+  @Column('int')
+  costoMateriales: number;
+
+  @Column('int')
+  costoTotal: number;
+
+  @Column('int')
+  valorTotal: number;
+
+  @Column()
+  estado: string;
+
+  @Column({ nullable: true, type: 'text' })
+  detalles: string;
+
+  @Column({ nullable: true, type: 'text' })
+  garantia: string;
+
+  @Column({ nullable: true, type: 'date' })
+  fechaInicio: Date;
+
+  @Column({ nullable: true, type: 'date' })
+  fechaTermino: Date;
 
   @OneToMany(() => ExtraRevestimiento, (e) => e.revestimiento, {
     cascade: true,

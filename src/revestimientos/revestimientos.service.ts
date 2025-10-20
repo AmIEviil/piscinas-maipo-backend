@@ -1,4 +1,80 @@
 import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Revestimiento } from './entities/revestimiento.entity';
+import { Repository } from 'typeorm';
+import { ExtraRevestimiento } from './entities/extra-revestimiento.entity';
+import { FilterRevestimientosDto } from './dto/FilterRevestimientos.dto';
 
 @Injectable()
-export class RevestimientosService {}
+export class RevestimientosService {
+  constructor(
+    @InjectRepository(Revestimiento)
+    private revestimientoRepository: Repository<Revestimiento>,
+
+    @InjectRepository(ExtraRevestimiento)
+    private extraRevestimientoRepository: Repository<ExtraRevestimiento>,
+  ) {}
+
+  async findByFilter(
+    filters: FilterRevestimientosDto,
+  ): Promise<Revestimiento[]> {
+    const query = this.revestimientoRepository
+      .createQueryBuilder('revestimiento')
+      .leftJoinAndSelect('revestimiento.client', 'client')
+      .leftJoinAndSelect('revestimiento.extras', 'extras');
+
+    if (filters.client_name) {
+      query.andWhere('LOWER(client.nombre) LIKE LOWER(:client_name)', {
+        client_name: `%${filters.client_name}%`,
+      });
+    }
+
+    if (filters.fechaPropuesta) {
+      query.andWhere('revestimiento.fechaPropuesta = :fechaPropuesta', {
+        fechaPropuesta: filters.fechaPropuesta,
+      });
+    }
+
+    if (filters.fechaTrabajo) {
+      query.andWhere('revestimiento.fechaTrabajo = :fechaTrabajo', {
+        fechaTrabajo: filters.fechaTrabajo,
+      });
+    }
+
+    return query.getMany();
+  }
+
+  async findOne(id: number): Promise<Revestimiento> {
+    const revestimiento = await this.revestimientoRepository.findOne({
+      where: { id },
+      relations: ['extras', 'client'],
+    });
+    if (!revestimiento) throw new Error('Revestimiento not found');
+    return revestimiento;
+  }
+
+  async createRevestimiento(
+    data: Partial<Revestimiento>,
+  ): Promise<Revestimiento> {
+    const newRevestimiento = this.revestimientoRepository.create(data);
+    return this.revestimientoRepository.save(newRevestimiento);
+  }
+
+  async updateRevestimiento(
+    id: number,
+    data: Partial<Revestimiento>,
+  ): Promise<Revestimiento> {
+    const existing = await this.revestimientoRepository.findOneBy({ id });
+    if (!existing) throw new Error('Revestimiento not found');
+    const updatedRevestimiento = this.revestimientoRepository.merge(
+      existing,
+      data,
+    );
+    return this.revestimientoRepository.save(updatedRevestimiento);
+  }
+
+  async deleteRevestimiento(id: number): Promise<void> {
+    const result = await this.revestimientoRepository.delete(id);
+    if (result.affected === 0) throw new Error('Revestimiento not found');
+  }
+}

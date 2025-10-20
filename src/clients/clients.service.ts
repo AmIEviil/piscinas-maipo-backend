@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Client } from './entities/clients.entity';
+import { FilterClientsDto } from './dto/FilterClients.dto';
 
 @Injectable()
 export class ClientsService {
@@ -40,12 +41,7 @@ export class ClientsService {
     if (result.affected === 0) throw new NotFoundException('Client not found');
   }
 
-  async findByFilters(filters: {
-    nombre?: string;
-    direccion?: string;
-    comuna?: string;
-    dia?: string;
-  }) {
+  async findByFilters(filters: FilterClientsDto) {
     const query = this.clientRepository.createQueryBuilder('client');
 
     if (filters.nombre) {
