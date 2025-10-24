@@ -8,6 +8,7 @@ import {
 } from 'typeorm';
 import { Client } from '../../clients/entities/clients.entity';
 import { ExtraRevestimiento } from './extra-revestimiento.entity';
+import { RevestimientoImagen } from './revestimiento-imagen.entity';
 
 @Entity()
 export class Revestimiento {
@@ -20,9 +21,6 @@ export class Revestimiento {
 
   @Column({ type: 'date' })
   fechaPropuesta: Date;
-
-  @Column({ type: 'date' })
-  fechaTrabajo: Date;
 
   @Column('float')
   largoPiscina: number;
@@ -51,19 +49,22 @@ export class Revestimiento {
   @Column('float')
   valorM2: number;
 
-  @Column('int')
+  @Column('float')
   costoManoObra: number;
 
-  @Column('int')
+  @Column('float')
   costoMateriales: number;
 
-  @Column('int')
+  @Column('float')
   costoTotal: number;
 
-  @Column('int')
+  @Column({ nullable: true, type: 'float' })
+  porcentajeGanancia: number;
+
+  @Column('float')
   valorTotal: number;
 
-  @Column()
+  @Column({ nullable: true, type: 'text', default: 'Pendiente' })
   estado: string;
 
   @Column({ nullable: true, type: 'text' })
@@ -82,4 +83,9 @@ export class Revestimiento {
     cascade: true,
   })
   extras: ExtraRevestimiento[];
+
+  @OneToMany(() => RevestimientoImagen, (img) => img.revestimiento, {
+    cascade: true,
+  })
+  imagenes: RevestimientoImagen[];
 }

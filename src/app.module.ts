@@ -12,13 +12,13 @@ import { RevestimientosModule } from './revestimientos/revestimientos.module';
 import { MetricsModule } from './metrics/metrics.module';
 import { AuthModule } from './auth/auth.module';
 import { HttpModule } from '@nestjs/axios';
+import { CloudinaryModule } from 'cloudinary/clodinary.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
     }),
-
     TypeOrmModule.forRoot({
       type: 'postgres',
       host: process.env.DB_HOST,
@@ -39,6 +39,7 @@ import { HttpModule } from '@nestjs/axios';
     MetricsModule,
     AuthModule,
     HttpModule,
+    CloudinaryModule,
   ],
   controllers: [AppController],
   providers: [AppService],

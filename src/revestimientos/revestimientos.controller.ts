@@ -10,7 +10,7 @@ import {
 } from '@nestjs/common';
 import { RevestimientosService } from './revestimientos.service';
 import { FilterRevestimientosDto } from './dto/FilterRevestimientos.dto';
-import { Revestimiento } from './entities/revestimiento.entity';
+import { IRevestimientoCreate } from './dto/CreateRevestimiento.dto';
 
 @Controller('revestimiento')
 export class RevestimientosController {
@@ -27,14 +27,14 @@ export class RevestimientosController {
   }
 
   @Post()
-  createRevestimiento(@Body() data: Partial<Revestimiento>) {
+  createRevestimiento(@Body() data: Partial<IRevestimientoCreate>) {
     return this.revestimientosService.createRevestimiento(data);
   }
 
   @Put(':id')
   updateRevestimiento(
     @Param('id') id: number,
-    @Body() data: Partial<Revestimiento>,
+    @Body() data: Partial<IRevestimientoCreate>,
   ) {
     return this.revestimientosService.updateRevestimiento(id, data);
   }

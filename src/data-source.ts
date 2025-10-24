@@ -12,6 +12,7 @@ import { MaintenanceTemporality } from './clients/entities/frecuency-maintenance
 import { User } from './users/entities/user.entity';
 import { Role } from './users/entities/role.entity';
 import { RoleUser } from './users/entities/role-user.entity';
+import { RevestimientoImagen } from './revestimientos/entities/revestimiento-imagen.entity';
 
 dotenv.config();
 
@@ -36,6 +37,7 @@ export const AppDataSource = new DataSource({
     User,
     Role,
     RoleUser,
+    RevestimientoImagen,
   ],
   migrations: ['src/migrations/*.ts'],
 });
