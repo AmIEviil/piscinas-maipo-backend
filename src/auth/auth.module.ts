@@ -5,9 +5,9 @@ import { AuthController } from './auth.controller';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { User } from 'users/entities/user.entity';
-import { Role } from 'users/entities/role.entity';
-import { RoleUser } from 'users/entities/role-user.entity';
+import { User } from '../users/entities/user.entity';
+import { Role } from '../users/entities/role.entity';
+import { RoleUser } from '../users/entities/role-user.entity';
 import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
 
