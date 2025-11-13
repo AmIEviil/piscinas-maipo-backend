@@ -5,8 +5,8 @@ import { v2 as cloudinary } from 'cloudinary';
 import { UploadApiResponse, UploadApiErrorResponse } from 'cloudinary';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { RevestimientoImagen } from '@revestimientos/entities/revestimiento-imagen.entity';
-import { Revestimiento } from '@revestimientos/entities/revestimiento.entity';
+import { RevestimientoImagen } from '../revestimientos/entities/revestimiento-imagen.entity';
+import { Revestimiento } from '../revestimientos/entities/revestimiento.entity';
 
 @Injectable()
 export class CloudinaryService {
