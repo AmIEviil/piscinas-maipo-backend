@@ -4,7 +4,7 @@ import { RevestimientosController } from './revestimientos.controller';
 import { ExtraRevestimiento } from './entities/extra-revestimiento.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Revestimiento } from './entities/revestimiento.entity';
-import { CloudinaryModule } from 'cloudinary/clodinary.module';
+import { CloudinaryModule } from '../cloudinary/clodinary.module';
 
 @Module({
   providers: [RevestimientosService],
