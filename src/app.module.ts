@@ -13,6 +13,7 @@ import { MetricsModule } from './metrics/metrics.module';
 import { AuthModule } from './auth/auth.module';
 import { HttpModule } from '@nestjs/axios';
 import { CloudinaryModule } from './cloudinary/clodinary.module';
+import { MigracionesModule } from './migraciones/migraciones.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { CloudinaryModule } from './cloudinary/clodinary.module';
     AuthModule,
     HttpModule,
     CloudinaryModule,
+    MigracionesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
