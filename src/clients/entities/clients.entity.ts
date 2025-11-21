@@ -13,8 +13,8 @@ import { MaintenanceTemporality } from './frecuency-maintenance';
 
 @Entity()
 export class Client {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Column()
   nombre: string;

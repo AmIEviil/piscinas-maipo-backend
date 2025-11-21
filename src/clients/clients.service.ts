@@ -15,7 +15,7 @@ export class ClientsService {
     return this.clientRepository.find();
   }
 
-  async findOne(id: number): Promise<Client> {
+  async findOne(id: string): Promise<Client> {
     const client = await this.clientRepository.findOneBy({ id });
     if (!client) {
       throw new NotFoundException(`client with id ${id} not found`);
@@ -28,7 +28,7 @@ export class ClientsService {
     return this.clientRepository.save(newClient);
   }
 
-  async update(id: number, Client: Partial<Client>): Promise<Client> {
+  async update(id: string, Client: Partial<Client>): Promise<Client> {
     const existing = await this.clientRepository.findOneBy({ id });
     if (!existing) throw new NotFoundException('Client not found');
 
@@ -36,7 +36,7 @@ export class ClientsService {
     return this.clientRepository.save(updatedClient);
   }
 
-  async remove(id: number): Promise<void> {
+  async remove(id: string): Promise<void> {
     const result = await this.clientRepository.delete(id);
     if (result.affected === 0) throw new NotFoundException('Client not found');
   }

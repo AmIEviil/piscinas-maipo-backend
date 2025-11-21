@@ -21,7 +21,7 @@ export interface IRevestimientoCreate {
   garantia?: string;
   fechaInicio?: string;
   fechaTermino?: string;
-  clienteId: number;
+  clienteId: string;
 
   imagenes: { url: string; public_id: string }[];
 }

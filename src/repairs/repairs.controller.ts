@@ -22,7 +22,7 @@ export class RepairsController {
   }
 
   @Get(':id')
-  async findOneRepair(@Param('id') id: number) {
+  async findOneRepair(@Param('id') id: string) {
     return this.repairsService.findOne(id);
   }
 
@@ -32,12 +32,12 @@ export class RepairsController {
   }
 
   @Put(':id')
-  async updateRepair(@Param('id') id: number, @Body() data: Partial<Repair>) {
+  async updateRepair(@Param('id') id: string, @Body() data: Partial<Repair>) {
     return this.repairsService.updateRepair(id, data);
   }
 
   @Delete(':id')
-  async deleteRepair(@Param('id') id: number) {
+  async deleteRepair(@Param('id') id: string) {
     return this.repairsService.deleteRepair(id);
   }
 }

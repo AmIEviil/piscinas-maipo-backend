@@ -52,7 +52,7 @@ export class ProductsController {
 
   @Put(':id')
   updateProduct(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseIntPipe) id: string,
     @Body() productData: Partial<Product>,
   ) {
     return this.productsService.updateProduct(id, productData);
@@ -60,19 +60,19 @@ export class ProductsController {
 
   @Put('types/:id')
   updateProductType(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseIntPipe) id: string,
     @Body() productData: Partial<ProductType>,
   ) {
     return this.productsService.updateProductType(id, productData);
   }
 
   @Delete(':id')
-  deleteProduct(@Param('id', ParseIntPipe) id: number) {
+  deleteProduct(@Param('id', ParseIntPipe) id: string) {
     return this.productsService.deleteProduct(id);
   }
 
   @Delete('types/:id')
-  deleteProductType(@Param('id', ParseIntPipe) id: number) {
+  deleteProductType(@Param('id', ParseIntPipe) id: string) {
     return this.productsService.deleteProductType(id);
   }
 }

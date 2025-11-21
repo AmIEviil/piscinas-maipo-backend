@@ -37,7 +37,7 @@ export class ClientsController {
 
   @Get(':id')
   findOne(@Param('id') id: string): Promise<Client> {
-    return this.clientService.findOne(+id);
+    return this.clientService.findOne(id);
   }
 
   @Post('create')
@@ -50,11 +50,11 @@ export class ClientsController {
     @Param('id') id: string,
     @Body() client: Partial<Client>,
   ): Promise<Client> {
-    return this.clientService.update(+id, client);
+    return this.clientService.update(id, client);
   }
 
   @Delete('delete/:id')
   remove(@Param('id') id: string): Promise<void> {
-    return this.clientService.remove(+id);
+    return this.clientService.remove(id);
   }
 }

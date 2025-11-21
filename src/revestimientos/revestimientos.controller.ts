@@ -22,7 +22,7 @@ export class RevestimientosController {
   }
 
   @Get(':id')
-  findOneRevestimiento(@Param('id') id: number) {
+  findOneRevestimiento(@Param('id') id: string) {
     return this.revestimientosService.findOne(id);
   }
 
@@ -33,14 +33,14 @@ export class RevestimientosController {
 
   @Put(':id')
   updateRevestimiento(
-    @Param('id') id: number,
+    @Param('id') id: string,
     @Body() data: Partial<IRevestimientoCreate>,
   ) {
     return this.revestimientosService.updateRevestimiento(id, data);
   }
 
   @Delete(':id')
-  deleteRevestimiento(@Param('id') id: number) {
+  deleteRevestimiento(@Param('id') id: string) {
     return this.revestimientosService.deleteRevestimiento(id);
   }
 }

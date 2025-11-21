@@ -11,8 +11,8 @@ import { MaintenanceProduct } from './maintenance-product.entity';
 
 @Entity()
 export class Maintenance {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Column({ name: 'fecha_mantencion', type: 'date' })
   fechaMantencion: Date;

@@ -21,7 +21,7 @@ export class MaintenanceController {
   }
   @Get(':id')
   findOne(@Param('id') id: string): Promise<Maintenance> {
-    return this.maintenanceService.findOne(+id);
+    return this.maintenanceService.findOne(id);
   }
 
   @Post()
@@ -34,16 +34,16 @@ export class MaintenanceController {
     @Param('id') id: string,
     @Body() maintenance: Partial<Maintenance>,
   ): Promise<Maintenance> {
-    return this.maintenanceService.update(+id, maintenance);
+    return this.maintenanceService.update(id, maintenance);
   }
 
   @Delete(':id')
   remove(@Param('id') id: string): Promise<void> {
-    return this.maintenanceService.remove(+id);
+    return this.maintenanceService.remove(id);
   }
 
   @Get('client/:id')
-  findByClientId(@Param('id') id: number) {
+  findByClientId(@Param('id') id: string) {
     return this.maintenanceService.findByClientId(id);
   }
 }

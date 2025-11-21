@@ -3,8 +3,8 @@ import { Client } from './clients.entity';
 
 @Entity()
 export class MaintenanceTemporality {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Column()
   nombre: string;

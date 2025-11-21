@@ -9,8 +9,8 @@ import { Revestimiento } from './revestimiento.entity';
 
 @Entity()
 export class ExtraRevestimiento {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @ManyToOne(() => Revestimiento, (r) => r.extras, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'revestimiento_id' })

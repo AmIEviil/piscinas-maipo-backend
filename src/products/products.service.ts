@@ -90,7 +90,7 @@ export class ProductsService {
   }
 
   async updateProduct(
-    id: number,
+    id: string,
     productData: Partial<Product>,
   ): Promise<Product> {
     await this.productRepository.update(id, productData);
@@ -102,7 +102,7 @@ export class ProductsService {
   }
 
   async updateProductType(
-    id: number,
+    id: string,
     productData: Partial<ProductType>,
   ): Promise<ProductType> {
     await this.productTypeRepository.update(id, productData);
@@ -115,14 +115,14 @@ export class ProductsService {
     return productType;
   }
 
-  async deleteProduct(id: number): Promise<void> {
+  async deleteProduct(id: string): Promise<void> {
     const result = await this.productRepository.delete(id);
     if (result.affected === 0) {
       throw new NotFoundException(`Product with id ${id} not found`);
     }
   }
 
-  async deleteProductType(id: number): Promise<void> {
+  async deleteProductType(id: string): Promise<void> {
     const result = await this.productTypeRepository.delete(id);
     if (result.affected === 0) {
       throw new NotFoundException(`ProductType with id ${id} not found`);

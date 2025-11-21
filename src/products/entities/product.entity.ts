@@ -11,8 +11,8 @@ import { ProductType } from './product-type';
 
 @Entity()
 export class Product {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @ManyToOne(() => ProductType, { nullable: false })
   @JoinColumn({ name: 'id_tipo' })

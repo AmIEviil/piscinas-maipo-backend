@@ -9,8 +9,8 @@ import { Revestimiento } from './revestimiento.entity';
 
 @Entity()
 export class RevestimientoImagen {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Column()
   url: string; // secure_url de Cloudinary

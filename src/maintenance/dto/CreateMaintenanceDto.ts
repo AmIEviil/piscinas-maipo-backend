@@ -3,12 +3,12 @@ import { Type } from 'class-transformer';
 
 export class ClientDto {
   @IsNumber()
-  id: number;
+  id: string;
 }
 
 export class CreateMaintenanceProductDto {
   @IsNumber()
-  productId: number;
+  productId: string;
 
   @IsNumber()
   cantidad: number;
