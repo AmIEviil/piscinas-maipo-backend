@@ -28,10 +28,6 @@ export class CreateUserDto {
   @IsBoolean()
   isActive?: boolean;
 
-  @IsString()
-  @MinLength(6)
-  password: string;
-
   @IsUUID()
   roleId: string; // ID del rol que quieres asignar
 }

@@ -96,7 +96,7 @@ export class AuthService {
       },
     });
 
-    let mensaje = 'incorrect_user_or_password';
+    let mensaje = 'Usuario o contraseña incorrecta';
     let response: {
       mensaje: string;
       remaining_attempts: number;
@@ -108,7 +108,7 @@ export class AuthService {
     };
 
     if (!user) {
-      mensaje = 'incorrect_user_or_password';
+      mensaje = 'Usuario no existe';
       response = {
         mensaje: mensaje,
         remaining_attempts: 5,
@@ -116,7 +116,7 @@ export class AuthService {
       };
       throw new UnauthorizedException({
         statusCode: 401,
-        message: 'incorrect_user_or_password',
+        message: 'Usuario no existe',
         error: 'Unauthorized',
         details: response,
       });
@@ -179,7 +179,7 @@ export class AuthService {
       };
       throw new UnauthorizedException({
         statusCode: 401,
-        message: 'blocked_until',
+        message: 'Cuenta bloqueada hasta ' + user.blocked_until.toISOString(),
         error: 'Unauthorized',
         details: response,
       });
@@ -202,10 +202,10 @@ export class AuthService {
       const remaining = Math.max(5 - user.failed_attempts, 0);
       mensaje =
         remaining <= 5 && remaining > 1
-          ? 'incorrect_password_plural'
+          ? 'Contraseña incorrecta, quedan ' + remaining + ' intentos'
           : remaining === 1
-            ? 'incorrect_password'
-            : 'blocked_account';
+            ? 'Contraseña incorrecta, queda 1 intento'
+            : 'Cuenta bloqueada por múltiples intentos fallidos';
 
       response = {
         mensaje: mensaje,
@@ -214,7 +214,7 @@ export class AuthService {
       };
       throw new UnauthorizedException({
         statusCode: 401,
-        message: 'Credenciales inválidas',
+        message: response.mensaje,
         error: 'Unauthorized',
         details: response,
       });

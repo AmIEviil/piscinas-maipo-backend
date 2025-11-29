@@ -14,6 +14,8 @@ import { AuthModule } from './auth/auth.module';
 import { HttpModule } from '@nestjs/axios';
 import { CloudinaryModule } from './cloudinary/clodinary.module';
 import { MigracionesModule } from './migraciones/migraciones.module';
+import { ObservacionesController } from './observaciones/observaciones.controller';
+import { ObservacionesModule } from './observaciones/observaciones.module';
 
 @Module({
   imports: [
@@ -30,6 +32,11 @@ import { MigracionesModule } from './migraciones/migraciones.module';
       autoLoadEntities: true,
       synchronize: true, // Solo en desarrollo
       migrationsRun: true,
+      extra: {
+        max: 10, // <= conexiones máximas por instancia
+        idleTimeoutMillis: 30000, // cierra conexiones inactivas tras 30s
+      },
+      migrations: [__dirname + '/migrations/*{.ts,.js}'],
     }),
     UsersModule,
     ClientsModule,
@@ -42,8 +49,9 @@ import { MigracionesModule } from './migraciones/migraciones.module';
     HttpModule,
     CloudinaryModule,
     MigracionesModule,
+    ObservacionesModule,
   ],
-  controllers: [AppController],
+  controllers: [AppController, ObservacionesController],
   providers: [AppService],
 })
 export class AppModule {}

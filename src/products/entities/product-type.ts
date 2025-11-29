@@ -3,8 +3,8 @@ import { Product } from './product.entity';
 
 @Entity()
 export class ProductType {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Column()
   nombre: string;

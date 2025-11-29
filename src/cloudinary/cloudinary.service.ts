@@ -40,7 +40,7 @@ export class CloudinaryService {
   }
 
   async addImagesBulk(
-    revestimientoId: number,
+    revestimientoId: string,
     imagenes: { url: string; public_id: string }[],
   ) {
     const revestimiento = await this.revestRepo.findOne({
@@ -60,7 +60,7 @@ export class CloudinaryService {
     return this.imagenRepo.save(records);
   }
 
-  async deleteImage(id: number) {
+  async deleteImage(id: string) {
     const imagen = await this.imagenRepo.findOne({ where: { id } });
     if (!imagen) throw new NotFoundException('Imagen no encontrada');
 
@@ -68,7 +68,7 @@ export class CloudinaryService {
     return this.imagenRepo.remove(imagen);
   }
 
-  async findByRevestimiento(revestimientoId: number) {
+  async findByRevestimiento(revestimientoId: string) {
     return this.imagenRepo.find({
       where: { revestimiento: { id: revestimientoId } },
     });

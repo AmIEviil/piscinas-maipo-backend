@@ -38,7 +38,7 @@ export class RepairsService {
     return query.getMany();
   }
 
-  async findOne(id: number): Promise<Repair> {
+  async findOne(id: string): Promise<Repair> {
     const repair = await this.repairsRepository.findOne({ where: { id } });
     if (!repair) throw new Error('Repair not found');
     return repair;
@@ -48,14 +48,14 @@ export class RepairsService {
     const newRepair = this.repairsRepository.create(data);
     return this.repairsRepository.save(newRepair);
   }
-  async updateRepair(id: number, data: Partial<Repair>): Promise<Repair> {
+  async updateRepair(id: string, data: Partial<Repair>): Promise<Repair> {
     const repair = await this.findOne(id);
     if (!repair) throw new Error('Repair not found');
     const updatedRepair = this.repairsRepository.merge(repair, data);
     return this.repairsRepository.save(updatedRepair);
   }
 
-  async deleteRepair(id: number): Promise<void> {
+  async deleteRepair(id: string): Promise<void> {
     const repair = await this.findOne(id);
     if (!repair) throw new Error('Repair not found');
     await this.repairsRepository.delete(id);

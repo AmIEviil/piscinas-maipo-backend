@@ -16,7 +16,7 @@ export class MaintenanceService {
     return this.maintenanceRepository.find();
   }
 
-  async findOne(id: number): Promise<Maintenance> {
+  async findOne(id: string): Promise<Maintenance> {
     const maintenance = await this.maintenanceRepository.findOneBy({ id });
     if (!maintenance) {
       throw new NotFoundException(`Maintenance with id ${id} not found`);
@@ -34,6 +34,7 @@ export class MaintenanceService {
         recibioPago: dto.recibioPago,
         valor_mantencion: dto.valorMantencion,
         client: { id: dto.client.id },
+        observaciones: dto.observaciones,
       });
 
       await manager.save(newMaintenance);
@@ -60,7 +61,7 @@ export class MaintenanceService {
   }
 
   async update(
-    id: number,
+    id: string,
     maintenance: Partial<Maintenance>,
   ): Promise<Maintenance> {
     const existing = await this.maintenanceRepository.findOneBy({ id });
@@ -73,16 +74,43 @@ export class MaintenanceService {
     return this.maintenanceRepository.save(updatedMaintenance);
   }
 
-  async remove(id: number): Promise<void> {
+  async remove(id: string): Promise<void> {
     const result = await this.maintenanceRepository.delete(id);
     if (result.affected === 0)
       throw new NotFoundException('maintenance not found');
   }
 
-  async findByClientId(id: number) {
-    return await this.maintenanceRepository.find({
+  async findByClientId(id: string) {
+    const allMaintenances = await this.maintenanceRepository.find({
       where: { client: { id } },
       relations: ['productos', 'productos.product'],
     });
+    if (allMaintenances.length === 0) {
+      throw new NotFoundException(
+        `No maintenances found for client with id ${id}`,
+      );
+    }
+    return allMaintenances;
+  }
+
+  async findGroupedByMonth(id: string) {
+    const maintenances = await this.findByClientId(id);
+
+    const grouped = maintenances.reduce(
+      (acc, item) => {
+        const date = new Date(item.fechaMantencion);
+
+        // clave tipo "2025-10"
+        const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+
+        if (!acc[key]) acc[key] = [];
+        acc[key].push(item);
+
+        return acc;
+      },
+      {} as Record<string, Maintenance[]>,
+    );
+
+    return grouped;
   }
 }

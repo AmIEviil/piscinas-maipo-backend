@@ -3,12 +3,12 @@ import { Client } from './clients.entity';
 
 @Entity()
 export class MaintenanceTemporality {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Column()
   nombre: string;
 
-  @OneToMany(() => Client, (client) => client.frequencia_mantencion)
+  @OneToMany(() => Client, (client) => client.frecuencia_mantencion)
   clientes: Client[];
 }

@@ -9,8 +9,8 @@ import { Client } from '../../clients/entities/clients.entity';
 
 @Entity()
 export class Repair {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @ManyToOne(() => Client, (c) => c.reparaciones, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'client_id' })

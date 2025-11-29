@@ -45,7 +45,7 @@ export class RevestimientosService {
     return query.getMany();
   }
 
-  async findOne(id: number): Promise<Revestimiento> {
+  async findOne(id: string): Promise<Revestimiento> {
     const revestimiento = await this.revestimientoRepository.findOne({
       where: { id },
       relations: ['extras', 'client', 'imagenes'],
@@ -65,7 +65,7 @@ export class RevestimientosService {
   }
 
   async updateRevestimiento(
-    id: number,
+    id: string,
     data: Partial<IRevestimientoCreate>,
   ): Promise<Revestimiento> {
     const existing = await this.revestimientoRepository.findOneBy({ id });
@@ -77,7 +77,7 @@ export class RevestimientosService {
     return this.revestimientoRepository.save(updatedRevestimiento);
   }
 
-  async deleteRevestimiento(id: number): Promise<void> {
+  async deleteRevestimiento(id: string): Promise<void> {
     const result = await this.revestimientoRepository.delete(id);
     if (result.affected === 0) throw new Error('Revestimiento not found');
   }

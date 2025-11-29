@@ -6,12 +6,15 @@ import {
   Delete,
   Param,
   Body,
+  UseGuards,
 } from '@nestjs/common';
 import { MaintenanceService } from './maintenance.service';
 import { Maintenance } from './entities/maintenance.entity';
 import { CreateMaintenanceDto } from './dto/CreateMaintenanceDto';
+import { JwtAuthGuard } from 'auth/guards/jwt-auth.guard';
 
 @Controller('maintenances')
+@UseGuards(JwtAuthGuard)
 export class MaintenanceController {
   constructor(private readonly maintenanceService: MaintenanceService) {}
 
@@ -21,7 +24,7 @@ export class MaintenanceController {
   }
   @Get(':id')
   findOne(@Param('id') id: string): Promise<Maintenance> {
-    return this.maintenanceService.findOne(+id);
+    return this.maintenanceService.findOne(id);
   }
 
   @Post()
@@ -34,16 +37,16 @@ export class MaintenanceController {
     @Param('id') id: string,
     @Body() maintenance: Partial<Maintenance>,
   ): Promise<Maintenance> {
-    return this.maintenanceService.update(+id, maintenance);
+    return this.maintenanceService.update(id, maintenance);
   }
 
   @Delete(':id')
   remove(@Param('id') id: string): Promise<void> {
-    return this.maintenanceService.remove(+id);
+    return this.maintenanceService.remove(id);
   }
 
   @Get('client/:id')
-  findByClientId(@Param('id') id: number) {
-    return this.maintenanceService.findByClientId(id);
+  findByClientId(@Param('id') id: string) {
+    return this.maintenanceService.findGroupedByMonth(id);
   }
 }

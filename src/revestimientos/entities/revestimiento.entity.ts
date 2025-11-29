@@ -12,8 +12,8 @@ import { RevestimientoImagen } from './revestimiento-imagen.entity';
 
 @Entity()
 export class Revestimiento {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @ManyToOne(() => Client, (c) => c.revestimientos, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'client_id' })

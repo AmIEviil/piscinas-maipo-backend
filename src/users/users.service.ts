@@ -39,4 +39,12 @@ export class UsersService {
     const result = await this.userRepository.delete(id);
     if (result.affected === 0) throw new NotFoundException('Task not found');
   }
+
+  async logicDelete(id: string): Promise<User> {
+    const user = await this.userRepository.findOneBy({ id });
+    if (!user) throw new NotFoundException('User not found');
+
+    user.isActive = false;
+    return this.userRepository.save(user);
+  }
 }

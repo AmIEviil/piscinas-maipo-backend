@@ -9,9 +9,11 @@ import { Product } from '../products/entities/product.entity';
 import { Repair } from '../repairs/entities/repair.entity';
 import { Revestimiento } from '../revestimientos/entities/revestimiento.entity';
 import { MaintenanceTemporality } from './entities/frecuency-maintenance';
+import { Observaciones } from 'observaciones/entity/observaciones.entity';
+import { ObservacionesService } from 'observaciones/observaciones.service';
 
 @Module({
-  providers: [ClientsService],
+  providers: [ClientsService, ObservacionesService],
   controllers: [ClientsController],
   imports: [
     TypeOrmModule.forFeature([
@@ -22,6 +24,7 @@ import { MaintenanceTemporality } from './entities/frecuency-maintenance';
       Product,
       Repair,
       Revestimiento,
+      Observaciones,
     ]),
   ],
 })

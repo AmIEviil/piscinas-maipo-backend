@@ -10,8 +10,8 @@ import { User } from 'users/entities/user.entity';
 
 @Entity('migration_audit')
 export class MigrationAudit {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Column()
   migration_name: string;

@@ -10,8 +10,8 @@ import { Product } from '../../products/entities/product.entity';
 
 @Entity()
 export class MaintenanceProduct {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @ManyToOne(() => Maintenance, (m) => m.productos, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'maintenance_id' })
