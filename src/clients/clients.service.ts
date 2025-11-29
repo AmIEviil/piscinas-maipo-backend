@@ -4,7 +4,7 @@ import { Repository } from 'typeorm';
 import { Client } from './entities/clients.entity';
 import { FilterClientsDto } from './dto/FilterClients.dto';
 import { CreateClientDto } from './dto/CreateClient.dto';
-import { ObservacionesService } from 'observaciones/observaciones.service';
+import { ObservacionesService } from '../observaciones/observaciones.service';
 
 @Injectable()
 export class ClientsService {
