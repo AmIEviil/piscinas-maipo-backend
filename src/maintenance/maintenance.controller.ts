@@ -6,12 +6,15 @@ import {
   Delete,
   Param,
   Body,
+  UseGuards,
 } from '@nestjs/common';
 import { MaintenanceService } from './maintenance.service';
 import { Maintenance } from './entities/maintenance.entity';
 import { CreateMaintenanceDto } from './dto/CreateMaintenanceDto';
+import { JwtAuthGuard } from 'auth/guards/jwt-auth.guard';
 
 @Controller('maintenances')
+@UseGuards(JwtAuthGuard)
 export class MaintenanceController {
   constructor(private readonly maintenanceService: MaintenanceService) {}
 
@@ -44,6 +47,6 @@ export class MaintenanceController {
 
   @Get('client/:id')
   findByClientId(@Param('id') id: string) {
-    return this.maintenanceService.findByClientId(id);
+    return this.maintenanceService.findGroupedByMonth(id);
   }
 }

@@ -7,12 +7,15 @@ import {
   Post,
   Put,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { RevestimientosService } from './revestimientos.service';
 import { FilterRevestimientosDto } from './dto/FilterRevestimientos.dto';
 import { IRevestimientoCreate } from './dto/CreateRevestimiento.dto';
+import { JwtAuthGuard } from 'auth/guards/jwt-auth.guard';
 
 @Controller('revestimiento')
+@UseGuards(JwtAuthGuard)
 export class RevestimientosController {
   constructor(private readonly revestimientosService: RevestimientosService) {}
 

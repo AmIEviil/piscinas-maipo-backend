@@ -7,11 +7,15 @@ import {
   Param,
   Body,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { ClientsService } from './clients.service';
 import { Client } from './entities/clients.entity';
+import { CreateClientDto } from './dto/CreateClient.dto';
+import { JwtAuthGuard } from 'auth/guards/jwt-auth.guard';
 
 @Controller('clients')
+@UseGuards(JwtAuthGuard)
 export class ClientsController {
   constructor(private readonly clientService: ClientsService) {}
 
@@ -41,7 +45,7 @@ export class ClientsController {
   }
 
   @Post('create')
-  create(@Body() client: Partial<Client>): Promise<Client> {
+  create(@Body() client: CreateClientDto): Promise<Client> {
     return this.clientService.createClient(client);
   }
 

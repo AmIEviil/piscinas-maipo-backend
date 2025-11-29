@@ -34,6 +34,7 @@ export class MaintenanceService {
         recibioPago: dto.recibioPago,
         valor_mantencion: dto.valorMantencion,
         client: { id: dto.client.id },
+        observaciones: dto.observaciones,
       });
 
       await manager.save(newMaintenance);
@@ -80,9 +81,36 @@ export class MaintenanceService {
   }
 
   async findByClientId(id: string) {
-    return await this.maintenanceRepository.find({
+    const allMaintenances = await this.maintenanceRepository.find({
       where: { client: { id } },
       relations: ['productos', 'productos.product'],
     });
+    if (allMaintenances.length === 0) {
+      throw new NotFoundException(
+        `No maintenances found for client with id ${id}`,
+      );
+    }
+    return allMaintenances;
+  }
+
+  async findGroupedByMonth(id: string) {
+    const maintenances = await this.findByClientId(id);
+
+    const grouped = maintenances.reduce(
+      (acc, item) => {
+        const date = new Date(item.fechaMantencion);
+
+        // clave tipo "2025-10"
+        const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+
+        if (!acc[key]) acc[key] = [];
+        acc[key].push(item);
+
+        return acc;
+      },
+      {} as Record<string, Maintenance[]>,
+    );
+
+    return grouped;
   }
 }

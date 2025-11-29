@@ -43,9 +43,12 @@ export class Client {
   @Column({ name: 'valor_mantencion', type: 'int' })
   valor_mantencion: number;
 
+  @Column({ name: 'isActive', default: true })
+  isActive: boolean;
+
   @ManyToOne(() => MaintenanceTemporality, (t) => t.clientes, { eager: true })
-  @JoinColumn({ name: 'frequencia_mantencion_id' })
-  frequencia_mantencion: MaintenanceTemporality;
+  @JoinColumn({ name: 'frecuencia_mantencion_id' })
+  frecuencia_mantencion: MaintenanceTemporality;
 
   @OneToMany(() => Maintenance, (m) => m.client)
   mantenciones: Maintenance[];

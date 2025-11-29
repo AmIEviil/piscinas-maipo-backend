@@ -1,17 +1,18 @@
-import { Controller, Get, Param, Post, Query } from '@nestjs/common';
+import { Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
 import { MigracionesService } from './migraciones.service';
+import { JwtAuthGuard } from 'auth/guards/jwt-auth.guard';
 // import { MigrationAccessGuard } from './guards/MigrationAccessGuard';
 // import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 
-@Controller('migraciones')
+@Controller('migrations')
 // @UseGuards(JwtAuthGuard, MigrationAccessGuard)
+@UseGuards(JwtAuthGuard)
 export class MigracionesController {
   constructor(private readonly migrationService: MigracionesService) {}
 
   @Get()
   async listMigrations(@Query('order') order: 'asc' | 'desc' = 'asc') {
-    console.log('Order:', order);
-    return this.migrationService.getMigrationsStatus();
+    return this.migrationService.getMigrationsStatus(order);
   }
 
   @Post('execute/:migrationName/:userId')
@@ -19,8 +20,7 @@ export class MigracionesController {
     @Param('migrationName') migrationName: string,
     @Param('userId') userId: string,
   ) {
-    console.log('Ejecutar migración llamada con:', migrationName, userId);
-    return this.migrationService.executeMigration();
+    return this.migrationService.executeMigration(migrationName, userId);
   }
 
   @Post('revert/:migrationName/:userId')
@@ -28,8 +28,7 @@ export class MigracionesController {
     @Param('migrationName') migrationName: string,
     @Param('userId') userId: string,
   ) {
-    console.log('Revertir migración llamada con:', migrationName, userId);
-    return this.migrationService.revertMigration();
+    return this.migrationService.revertMigration(migrationName, userId);
   }
 
   @Post('execute-all')
@@ -44,7 +43,6 @@ export class MigracionesController {
 
   @Get('history')
   async getMigrationHistory(@Query('migration') migrationName?: string) {
-    console.log('migrationName:', migrationName);
-    return this.migrationService.getMigrationHistory();
+    return this.migrationService.getMigrationHistory(migrationName);
   }
 }

@@ -3,13 +3,19 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Client } from './entities/clients.entity';
 import { FilterClientsDto } from './dto/FilterClients.dto';
+import { CreateClientDto } from './dto/CreateClient.dto';
+import { ObservacionesService } from 'observaciones/observaciones.service';
 
 @Injectable()
 export class ClientsService {
   constructor(
     @InjectRepository(Client)
     private clientRepository: Repository<Client>,
+
+    private readonly observacionesService: ObservacionesService,
   ) {}
+
+  private readonly tipoEntidad = 'client';
 
   findAll(): Promise<Client[]> {
     return this.clientRepository.find();
@@ -23,8 +29,16 @@ export class ClientsService {
     return client;
   }
 
-  async createClient(client: Partial<Client>): Promise<Client> {
+  async createClient(client: CreateClientDto): Promise<Client> {
     const newClient = this.clientRepository.create(client);
+    if (client.observacion) {
+      await this.observacionesService.createObservacion({
+        tipoEntidad: this.tipoEntidad,
+        registro_id: newClient.id,
+        detalle: client.observacion,
+        fecha: new Date(),
+      });
+    }
     return this.clientRepository.save(newClient);
   }
 

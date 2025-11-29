@@ -9,6 +9,6 @@ export class MaintenanceTemporality {
   @Column()
   nombre: string;
 
-  @OneToMany(() => Client, (client) => client.frequencia_mantencion)
+  @OneToMany(() => Client, (client) => client.frecuencia_mantencion)
   clientes: Client[];
 }

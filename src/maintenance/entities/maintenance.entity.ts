@@ -30,6 +30,9 @@ export class Maintenance {
   @JoinColumn({ name: 'client_id' })
   client: Client;
 
+  @Column({ name: 'observaciones', type: 'text', nullable: true })
+  observaciones: string;
+
   @OneToMany(() => MaintenanceProduct, (mp) => mp.maintenance, {
     cascade: true,
   })

@@ -1,13 +1,19 @@
-import { IsString, IsBoolean, IsNumber, ValidateNested } from 'class-validator';
+import {
+  IsString,
+  IsBoolean,
+  IsNumber,
+  ValidateNested,
+  IsOptional,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class ClientDto {
-  @IsNumber()
+  @IsString()
   id: string;
 }
 
 export class CreateMaintenanceProductDto {
-  @IsNumber()
+  @IsString()
   productId: string;
 
   @IsNumber()
@@ -34,4 +40,8 @@ export class CreateMaintenanceDto {
   @ValidateNested({ each: true })
   @Type(() => CreateMaintenanceProductDto)
   productosUsados?: CreateMaintenanceProductDto[];
+
+  @IsString()
+  @IsOptional()
+  observaciones: string;
 }

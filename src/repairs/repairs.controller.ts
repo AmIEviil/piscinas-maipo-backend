@@ -7,12 +7,15 @@ import {
   Post,
   Put,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { RepairsService } from './repairs.service';
 import { FilterRepairDto } from './dto/FilterRepair.dto';
 import { Repair } from './entities/repair.entity';
+import { JwtAuthGuard } from 'auth/guards/jwt-auth.guard';
 
 @Controller('repairs')
+@UseGuards(JwtAuthGuard)
 export class RepairsController {
   constructor(private readonly repairsService: RepairsService) {}
 
