@@ -12,7 +12,7 @@ import {
 import { RevestimientosService } from './revestimientos.service';
 import { FilterRevestimientosDto } from './dto/FilterRevestimientos.dto';
 import { IRevestimientoCreate } from './dto/CreateRevestimiento.dto';
-import { JwtAuthGuard } from 'auth/guards/jwt-auth.guard';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @Controller('revestimiento')
 @UseGuards(JwtAuthGuard)

@@ -1,6 +1,6 @@
 import { Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
 import { MigracionesService } from './migraciones.service';
-import { JwtAuthGuard } from 'auth/guards/jwt-auth.guard';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 // import { MigrationAccessGuard } from './guards/MigrationAccessGuard';
 // import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 

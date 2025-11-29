@@ -11,7 +11,7 @@ import {
 import { MaintenanceService } from './maintenance.service';
 import { Maintenance } from './entities/maintenance.entity';
 import { CreateMaintenanceDto } from './dto/CreateMaintenanceDto';
-import { JwtAuthGuard } from 'auth/guards/jwt-auth.guard';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @Controller('maintenances')
 @UseGuards(JwtAuthGuard)

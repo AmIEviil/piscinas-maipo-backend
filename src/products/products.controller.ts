@@ -13,7 +13,7 @@ import {
 import { ProductsService } from './products.service';
 import { Product } from './entities/product.entity';
 import { ProductType } from './entities/product-type';
-import { JwtAuthGuard } from 'auth/guards/jwt-auth.guard';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @Controller('products')
 @UseGuards(JwtAuthGuard)

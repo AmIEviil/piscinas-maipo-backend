@@ -12,7 +12,7 @@ import {
 import { ClientsService } from './clients.service';
 import { Client } from './entities/clients.entity';
 import { CreateClientDto } from './dto/CreateClient.dto';
-import { JwtAuthGuard } from 'auth/guards/jwt-auth.guard';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @Controller('clients')
 @UseGuards(JwtAuthGuard)

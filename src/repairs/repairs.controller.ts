@@ -12,7 +12,7 @@ import {
 import { RepairsService } from './repairs.service';
 import { FilterRepairDto } from './dto/FilterRepair.dto';
 import { Repair } from './entities/repair.entity';
-import { JwtAuthGuard } from 'auth/guards/jwt-auth.guard';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @Controller('repairs')
 @UseGuards(JwtAuthGuard)
