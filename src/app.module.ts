@@ -31,7 +31,7 @@ import { ObservacionesModule } from './observaciones/observaciones.module';
       database: process.env.DB_NAME,
       autoLoadEntities: true,
       synchronize: true, // Solo en desarrollo
-      migrationsRun: true,
+      // migrationsRun: true,
       extra: {
         max: 10, // <= conexiones máximas por instancia
         idleTimeoutMillis: 30000, // cierra conexiones inactivas tras 30s
