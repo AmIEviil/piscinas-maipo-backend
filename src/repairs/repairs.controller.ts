@@ -10,7 +10,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { RepairsService } from './repairs.service';
-import { FilterRepairDto } from './dto/FilterRepair.dto';
+import { CreateRepairDto, FilterRepairDto } from './dto/FilterRepair.dto';
 import { Repair } from './entities/repair.entity';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
@@ -30,7 +30,7 @@ export class RepairsController {
   }
 
   @Post()
-  async createRepair(@Body() data: Partial<Repair>) {
+  async createRepair(@Body() data: CreateRepairDto) {
     return this.repairsService.createRepair(data);
   }
 

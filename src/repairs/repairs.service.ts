@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Repair } from './entities/repair.entity';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FilterRepairDto } from './dto/FilterRepair.dto';
+import { CreateRepairDto, FilterRepairDto } from './dto/FilterRepair.dto';
 
 @Injectable()
 export class RepairsService {
@@ -12,20 +12,22 @@ export class RepairsService {
   ) {}
 
   async findAllRepairs(filters: FilterRepairDto): Promise<Repair[]> {
-    const query = this.repairsRepository.createQueryBuilder('repair');
+    const query = this.repairsRepository
+      .createQueryBuilder('repair')
+      .leftJoinAndSelect('repair.client', 'client');
 
     if (filters.nombreCliente) {
-      query.andWhere('repair.nombreCliente = :nombreCliente', {
+      query.andWhere('client.nombre = :nombreCliente', {
         nombreCliente: filters.nombreCliente,
       });
     }
     if (filters.direccionCliente) {
-      query.andWhere('repair.direccionCliente = :direccionCliente', {
+      query.andWhere('client.direccion = :direccionCliente', {
         direccionCliente: filters.direccionCliente,
       });
     }
     if (filters.comunaCliente) {
-      query.andWhere('repair.comunaCliente = :comunaCliente', {
+      query.andWhere('client.comuna = :comunaCliente', {
         comunaCliente: filters.comunaCliente,
       });
     }
@@ -44,10 +46,15 @@ export class RepairsService {
     return repair;
   }
 
-  async createRepair(data: Partial<Repair>): Promise<Repair> {
-    const newRepair = this.repairsRepository.create(data);
+  async createRepair(data: CreateRepairDto): Promise<Repair> {
+    console.log('Creating repair with data:', data);
+    const newRepair = this.repairsRepository.create({
+      ...data,
+      client: { id: data.client_id },
+    });
     return this.repairsRepository.save(newRepair);
   }
+
   async updateRepair(id: string, data: Partial<Repair>): Promise<Repair> {
     const repair = await this.findOne(id);
     if (!repair) throw new Error('Repair not found');

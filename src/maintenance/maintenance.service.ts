@@ -25,7 +25,6 @@ export class MaintenanceService {
   }
 
   async createMaintenance(dto: CreateMaintenanceDto) {
-    console.log('Creating maintenance with DTO:', dto);
     return this.maintenanceRepository.manager.transaction(async (manager) => {
       // Crear mantención
       const newMaintenance = this.maintenanceRepository.create({
@@ -86,9 +85,7 @@ export class MaintenanceService {
       relations: ['productos', 'productos.product'],
     });
     if (allMaintenances.length === 0) {
-      throw new NotFoundException(
-        `No maintenances found for client with id ${id}`,
-      );
+      return [];
     }
     return allMaintenances;
   }

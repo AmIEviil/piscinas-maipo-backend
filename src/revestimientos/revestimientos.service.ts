@@ -22,7 +22,8 @@ export class RevestimientosService {
     const query = this.revestimientoRepository
       .createQueryBuilder('revestimiento')
       .leftJoinAndSelect('revestimiento.client', 'client')
-      .leftJoinAndSelect('revestimiento.extras', 'extras');
+      .leftJoinAndSelect('revestimiento.extras', 'extras')
+      .leftJoinAndSelect('revestimiento.imagenes', 'imagenes');
 
     if (filters.client_name) {
       query.andWhere('LOWER(client.nombre) LIKE LOWER(:client_name)', {

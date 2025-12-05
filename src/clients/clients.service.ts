@@ -82,6 +82,22 @@ export class ClientsService {
       });
     }
 
-    return query.getMany();
+    if (filters.orderBy) {
+      query.orderBy(`client.${filters.orderBy}`, filters.orderDirection);
+    }
+
+    const clients = await query.getMany();
+
+    // AGRUPAR POR DIA
+    const grouped: Record<string, Client[]> = {};
+
+    clients.forEach((client) => {
+      const day = client.dia_mantencion || 'Sin Día';
+
+      if (!grouped[day]) grouped[day] = [];
+      grouped[day].push(client);
+    });
+
+    return grouped;
   }
 }
