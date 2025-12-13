@@ -23,4 +23,6 @@ export class CreateClientDto {
   @IsOptional()
   @IsString()
   observacion?: string;
+  @IsString()
+  ruta?: string;
 }

@@ -3,11 +3,8 @@ export interface FilterClientsDto {
   direccion?: string;
   comuna?: string;
   dia?: string;
-  orderBy?:
-    | 'nombre'
-    | 'comuna'
-    | 'dia_mantencion'
-    | 'direccion'
-    | 'valor_mantencion';
+  ruta?: string;
+  isActive?: boolean;
+  orderBy?: string;
   orderDirection?: 'ASC' | 'DESC';
 }

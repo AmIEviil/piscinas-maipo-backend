@@ -16,6 +16,7 @@ import { CloudinaryModule } from './cloudinary/clodinary.module';
 import { MigracionesModule } from './migraciones/migraciones.module';
 import { ObservacionesController } from './observaciones/observaciones.controller';
 import { ObservacionesModule } from './observaciones/observaciones.module';
+import { TasksModule } from 'tasks/tasks.module';
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { ObservacionesModule } from './observaciones/observaciones.module';
     CloudinaryModule,
     MigracionesModule,
     ObservacionesModule,
+    TasksModule,
   ],
   controllers: [AppController, ObservacionesController],
   providers: [AppService],

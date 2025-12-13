@@ -4,6 +4,7 @@ import { Product } from './entities/product.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ProductType } from './entities/product-type';
 import { FilterProductDto } from './dto/FilterProduct.dto';
+import { ProductHistory } from './entities/product-history';
 
 @Injectable()
 export class ProductsService {
@@ -12,6 +13,8 @@ export class ProductsService {
     private productRepository: Repository<Product>,
     @InjectRepository(ProductType)
     private productTypeRepository: Repository<ProductType>,
+    @InjectRepository(ProductHistory)
+    private productHistoryRepository: Repository<ProductHistory>,
   ) {}
 
   async getAllProducts(): Promise<Product[]> {
@@ -47,7 +50,8 @@ export class ProductsService {
     >();
 
     for (const product of products) {
-      const tipo = product.tipo?.nombre ?? 'Sin tipo';
+      console.log('Processing product:', product);
+      const nombre = product.nombre ?? 'Sin tipo';
 
       const disponibles = product.cant_disponible ?? 0;
 
@@ -57,13 +61,20 @@ export class ProductsService {
           0,
         ) ?? 0;
 
-      if (!metricsMap.has(tipo)) {
-        metricsMap.set(tipo, { disponibles: 0, usados: 0 });
+      if (!metricsMap.has(nombre)) {
+        metricsMap.set(nombre, { disponibles: 0, usados: 0 });
       }
 
-      const current = metricsMap.get(tipo)!;
+      const current = metricsMap.get(nombre)!;
       current.disponibles += disponibles;
       current.usados += usados;
+
+      const disponiblesAfterUsage = disponibles + usados;
+      if (disponiblesAfterUsage != product.cant_disponible) {
+        await this.productRepository.update(product.id, {
+          cant_disponible: disponiblesAfterUsage - usados,
+        });
+      }
     }
 
     return Array.from(metricsMap.entries()).map(([tipo, data]) => ({
@@ -93,6 +104,29 @@ export class ProductsService {
     id: string,
     productData: Partial<Product>,
   ): Promise<Product> {
+    if (productData.valor_unitario !== undefined) {
+      const existingProduct = await this.productRepository.findOne({
+        where: { id },
+      });
+      if (!existingProduct) {
+        throw new NotFoundException(`Product with id ${id} not found`);
+      }
+      const previousPrice = existingProduct.valor_unitario;
+      const newPrice = productData.valor_unitario;
+      if (previousPrice !== newPrice) {
+        try {
+          const priceChange = this.productHistoryRepository.create({
+            product_id: id,
+            precio_anterior: previousPrice,
+            precio_nuevo: newPrice,
+          });
+          await this.productHistoryRepository.save(priceChange);
+        } catch (error) {
+          console.error('Error saving price change history:', error);
+        }
+      }
+    }
+
     await this.productRepository.update(id, productData);
     const product = await this.productRepository.findOne({ where: { id } });
     if (!product) {

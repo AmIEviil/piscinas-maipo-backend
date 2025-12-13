@@ -40,6 +40,9 @@ export class Client {
   @Column({ name: 'dia_mantencion' })
   dia_mantencion: string;
 
+  @Column({ name: 'ruta', nullable: true })
+  ruta: string;
+
   @Column({ name: 'valor_mantencion', type: 'int' })
   valor_mantencion: number;
 

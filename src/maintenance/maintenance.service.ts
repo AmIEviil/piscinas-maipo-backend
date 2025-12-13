@@ -47,7 +47,15 @@ export class MaintenanceService {
             cantidad: p.cantidad,
           }),
         );
-
+        const updateDisponibles = dto.productosUsados.map(async (p) => {
+          await manager.decrement(
+            'Product',
+            { id: p.productId },
+            'cant_disponible',
+            p.cantidad,
+          );
+        });
+        await Promise.all(updateDisponibles);
         await manager.save(productsToInsert);
       }
 

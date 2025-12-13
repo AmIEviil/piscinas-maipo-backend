@@ -4,7 +4,6 @@ import {
   Delete,
   Get,
   Param,
-  ParseIntPipe,
   Post,
   Put,
   Query,
@@ -55,7 +54,7 @@ export class ProductsController {
 
   @Put(':id')
   updateProduct(
-    @Param('id', ParseIntPipe) id: string,
+    @Param('id') id: string,
     @Body() productData: Partial<Product>,
   ) {
     return this.productsService.updateProduct(id, productData);
@@ -63,19 +62,19 @@ export class ProductsController {
 
   @Put('types/:id')
   updateProductType(
-    @Param('id', ParseIntPipe) id: string,
+    @Param('id') id: string,
     @Body() productData: Partial<ProductType>,
   ) {
     return this.productsService.updateProductType(id, productData);
   }
 
   @Delete(':id')
-  deleteProduct(@Param('id', ParseIntPipe) id: string) {
+  deleteProduct(@Param('id') id: string) {
     return this.productsService.deleteProduct(id);
   }
 
   @Delete('types/:id')
-  deleteProductType(@Param('id', ParseIntPipe) id: string) {
+  deleteProductType(@Param('id') id: string) {
     return this.productsService.deleteProductType(id);
   }
 }
