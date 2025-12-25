@@ -83,6 +83,7 @@ export class ClientsService {
   }
 
   async updateCampo(user_id: string, dto: UpdateCampoDto[]) {
+    let camposActualizados = 0;
     for (const campoDto of dto) {
       const existing = await this.clientRepository.findOneBy({
         id: user_id,
@@ -93,8 +94,9 @@ export class ClientsService {
         [campoDto.campo]: campoDto.valor,
       });
       await this.clientRepository.save(updatedClient);
-      return updatedClient;
+      camposActualizados++;
     }
+    return { camposActualizados };
   }
 
   async remove(id: string): Promise<void> {

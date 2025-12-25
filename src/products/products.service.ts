@@ -18,7 +18,7 @@ export class ProductsService {
   ) {}
 
   async getAllProducts(): Promise<Product[]> {
-    return this.productRepository.find({ relations: ['tipo'] });
+    return this.productRepository.find({ relations: ['tipo', 'historial'] });
   }
 
   async findByFilters(filters: FilterProductDto): Promise<Product[]> {
@@ -90,6 +90,12 @@ export class ProductsService {
 
   async createProduct(productData: Partial<Product>): Promise<Product> {
     const newProduct = this.productRepository.create(productData);
+    const historyEntry = this.productHistoryRepository.create({
+      product: newProduct,
+      precio_anterior: 0,
+      precio_nuevo: newProduct.valor_unitario || 0,
+    });
+    await this.productHistoryRepository.save(historyEntry);
     return this.productRepository.save(newProduct);
   }
 
@@ -116,7 +122,7 @@ export class ProductsService {
       if (previousPrice !== newPrice) {
         try {
           const priceChange = this.productHistoryRepository.create({
-            product_id: id,
+            product: existingProduct,
             precio_anterior: previousPrice,
             precio_nuevo: newPrice,
           });

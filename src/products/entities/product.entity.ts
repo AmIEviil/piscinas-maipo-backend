@@ -8,6 +8,7 @@ import {
 } from 'typeorm';
 import { MaintenanceProduct } from '../../maintenance/entities/maintenance-product.entity';
 import { ProductType } from './product-type';
+import { ProductHistory } from './product-history';
 
 @Entity()
 export class Product {
@@ -26,6 +27,9 @@ export class Product {
 
   @Column({ nullable: true, type: 'int', default: 0 })
   cant_disponible: number;
+
+  @OneToMany(() => ProductHistory, (history) => history.product)
+  historial: ProductHistory[];
 
   @OneToMany(() => MaintenanceProduct, (mp) => mp.product)
   mantenimientos: MaintenanceProduct[];

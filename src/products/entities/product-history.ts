@@ -1,12 +1,23 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
+import { Product } from './product.entity';
 
 @Entity('product_history')
 export class ProductHistory {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column()
-  product_id: string;
+  @ManyToOne(() => Product, (product) => product.historial, {
+    nullable: false,
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'product_id' })
+  product: Product;
 
   @Column('int')
   precio_anterior: number;
