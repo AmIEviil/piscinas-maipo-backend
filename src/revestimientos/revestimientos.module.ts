@@ -13,5 +13,6 @@ import { CloudinaryModule } from '../cloudinary/clodinary.module';
     TypeOrmModule.forFeature([Revestimiento, ExtraRevestimiento]),
     CloudinaryModule,
   ],
+  exports: [RevestimientosService],
 })
 export class RevestimientosModule {}

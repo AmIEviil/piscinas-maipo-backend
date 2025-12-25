@@ -17,7 +17,7 @@ import { MigracionesModule } from './migraciones/migraciones.module';
 import { ObservacionesController } from './observaciones/observaciones.controller';
 import { ObservacionesModule } from './observaciones/observaciones.module';
 import { TasksModule } from './tasks/tasks.module';
-// import { PdfModule } from './pdf/pdf.module';
+import { PdfModule } from './pdf/pdf.module';
 
 @Module({
   imports: [
@@ -53,7 +53,7 @@ import { TasksModule } from './tasks/tasks.module';
     MigracionesModule,
     ObservacionesModule,
     TasksModule,
-    // PdfModule,
+    PdfModule,
   ],
   controllers: [AppController, ObservacionesController],
   providers: [AppService],
