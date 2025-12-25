@@ -5,7 +5,7 @@ import { Client } from './entities/clients.entity';
 import { FilterClientsDto } from './dto/FilterClients.dto';
 import { CreateClientDto } from './dto/CreateClient.dto';
 import { ObservacionesService } from '../observaciones/observaciones.service';
-import { getValorCampoTipoExtendido } from '@utils/extendedLabel.utils';
+import { getValorCampoTipoExtendido } from '../utils/extendedLabel.utils';
 import { UpdateCampoDto } from './dto/Campos.dto';
 
 @Injectable()
