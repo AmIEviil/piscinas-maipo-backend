@@ -18,8 +18,9 @@ jobs:
             ${{ secrets.SERVER_SSH_KEY }}
           debug: true
           script: |
+            set -e
             cd /home/ubuntu/piscinas-elmaipo/backend
             git pull origin main
             npm install --legacy-peer-deps
             npm run build
-            pm2 restart piscinas-backend
+            pm2 restart piscinas-backend --update-env
