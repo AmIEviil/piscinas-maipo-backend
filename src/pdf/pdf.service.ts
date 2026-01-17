@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import puppeteer from 'puppeteer';
 import { revestimientoPropuestaTemplate } from './templates/revestimiento-propuesta';
-import { RevestimientosService } from '@revestimientos/revestimientos.service';
+import { RevestimientosService } from '../revestimientos/revestimientos.service';
 
 @Injectable()
 export class PdfService {
