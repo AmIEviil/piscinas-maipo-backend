@@ -27,7 +27,7 @@ export class ProductsController {
   @Get('filter')
   getProducts(
     @Query('nombre') nombre?: string,
-    @Query('tipoId') tipoId?: number,
+    @Query('tipoId') tipoId?: string,
   ) {
     return this.productsService.findByFilters({ nombre, tipoId });
   }

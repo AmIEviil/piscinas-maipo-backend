@@ -1,6 +1,26 @@
 import { Revestimiento } from '@revestimientos/entities/revestimiento.entity';
-
+import * as fs from 'fs';
+import * as path from 'path';
 export const revestimientoPropuestaTemplate = (data: Revestimiento) => {
+  let logoBase64 = '';
+  try {
+    // Ajusta esta ruta si tu estructura de carpetas compilada (dist) es diferente.
+    // process.cwd() apunta a la raiz del proyecto donde corre el node process.
+    const logoPath = path.join(
+      process.cwd(),
+      'src/pdf/templates/assets/piscinasElMaipo.svg',
+    );
+
+    // Leemos el archivo
+    const logoBuffer = fs.readFileSync(logoPath);
+    // Convertimos a base64 con el prefijo correcto para SVG
+    logoBase64 = `data:image/svg+xml;base64,${logoBuffer.toString('base64')}`;
+  } catch (error) {
+    console.warn('No se pudo cargar el logo SVG:', error);
+    // Fallback por si falla la carga (opcional: dejar vacío o poner placeholder)
+    logoBase64 = 'https://via.placeholder.com/100x40?text=Logo+Error';
+  }
+
   const formatCurrency = (value: number) =>
     value?.toLocaleString('es-CL', {
       style: 'currency',
@@ -46,6 +66,11 @@ export const revestimientoPropuestaTemplate = (data: Revestimiento) => {
       <meta charset="UTF-8" />
       <title>Propuesta Comercial Revestimiento</title>
       <style>
+        .header-document{
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
         body {
           font-family: Arial, Helvetica, sans-serif;
           font-size: 12px;
@@ -128,8 +153,15 @@ export const revestimientoPropuestaTemplate = (data: Revestimiento) => {
     </head>
 
     <body>
-
-      <h1>Propuesta Comercial de Revestimiento</h1>
+    <div class="header-document">
+        <h1>Propuesta Comercial de Revestimiento</h1>
+        <img
+          src="${logoBase64}"
+          width="50"
+          alt="Logo"
+          style="display: block"
+        />
+      </div>
       <p><strong>Fecha:</strong> ${formatFecha(data.fechaPropuesta)}</p>
 
       <div class="header">

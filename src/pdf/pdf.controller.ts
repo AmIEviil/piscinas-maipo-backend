@@ -21,4 +21,15 @@ export class PdfController {
 
     res.end(pdf);
   }
+
+  @Get('revestimiento-propuesta/html/:id')
+  async getPropuestaRevestimientoHtml(
+    @Param('id') revestimientoId: string,
+  ): Promise<string> {
+    const html = await this.pdfService.generatePropuestaRevestimientoPdf(
+      revestimientoId,
+      true,
+    );
+    return html as string;
+  }
 }

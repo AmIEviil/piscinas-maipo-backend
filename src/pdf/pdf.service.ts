@@ -25,11 +25,17 @@ export class PdfService {
     return Buffer.from(pdf);
   }
 
-  async generatePropuestaRevestimientoPdf(revestimientoId: string) {
+  async generatePropuestaRevestimientoPdf(
+    revestimientoId: string,
+    onlyHtml?: boolean,
+  ): Promise<Buffer | string> {
     const revestimiento =
       await this.revestimientoService.findOne(revestimientoId);
     console.log(revestimiento);
     const html = revestimientoPropuestaTemplate(revestimiento);
+    if (onlyHtml) {
+      return html;
+    }
     const pdf = await this.generatePdfFromHtml(html);
     return pdf;
   }

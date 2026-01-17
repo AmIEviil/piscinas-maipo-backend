@@ -22,14 +22,19 @@ export class ProductsService {
   }
 
   async findByFilters(filters: FilterProductDto): Promise<Product[]> {
-    const query = this.productRepository.createQueryBuilder('product');
+    console.log('Filters received:', filters);
+    const query = this.productRepository
+      .createQueryBuilder('product')
+      .innerJoinAndSelect('product.tipo', 'tipo')
+      .leftJoinAndSelect('product.historial', 'historial');
+
     if (filters.nombre) {
       query.andWhere('product.nombre ILIKE :nombre', {
         nombre: `%${filters.nombre}%`,
       });
     }
     if (filters.tipoId) {
-      query.andWhere('product.tipoId = :tipoId', { tipoId: filters.tipoId });
+      query.andWhere('product.id_tipo = :tipoId', { tipoId: filters.tipoId });
     }
     return query.getMany();
   }
