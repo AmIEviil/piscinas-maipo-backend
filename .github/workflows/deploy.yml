@@ -20,7 +20,10 @@ jobs:
           script: |
             set -e
             cd /home/ubuntu/piscinas-elmaipo/backend
-            git pull origin main
+
+            git fetch origin
+            git reset --hard origin/main
+            
             npm install --legacy-peer-deps
             npm run build
             pm2 restart piscinas-backend --update-env
