@@ -7,6 +7,7 @@ import { CreateClientDto } from './dto/CreateClient.dto';
 import { ObservacionesService } from '../observaciones/observaciones.service';
 import { getValorCampoTipoExtendido } from '../utils/extendedLabel.utils';
 import { UpdateCampoDto } from './dto/Campos.dto';
+import { UpdateClientDto } from './dto/UpdateClient.dto';
 
 @Injectable()
 export class ClientsService {
@@ -74,9 +75,22 @@ export class ClientsService {
     return this.clientRepository.save(newClient);
   }
 
-  async update(id: string, Client: Partial<Client>): Promise<Client> {
+  async update(
+    id: string,
+    Client: UpdateClientDto,
+    userId: string,
+  ): Promise<Client> {
     const existing = await this.clientRepository.findOneBy({ id });
     if (!existing) throw new NotFoundException('Client not found');
+    if (Client.observacion) {
+      await this.observacionesService.createObservacion({
+        tipoEntidad: this.tipoEntidad,
+        registro_id: id,
+        detalle: String(Client.observacion),
+        fecha: new Date(),
+        usuarioId: userId,
+      });
+    }
 
     const updatedClient = this.clientRepository.merge(existing, Client);
     return this.clientRepository.save(updatedClient);
@@ -93,6 +107,14 @@ export class ClientsService {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         [campoDto.campo]: campoDto.valor,
       });
+      if (campoDto.campo === 'observacion') {
+        await this.observacionesService.createObservacion({
+          tipoEntidad: this.tipoEntidad,
+          registro_id: user_id,
+          detalle: String(campoDto.valor),
+          fecha: new Date(),
+        });
+      }
       await this.clientRepository.save(updatedClient);
       camposActualizados++;
     }
@@ -149,10 +171,19 @@ export class ClientsService {
 
     const clients = await query.getMany();
 
+    const clientsWithObservations = await Promise.all(
+      clients.map(async (client) => {
+        const observaciones = await this.observacionesService.findByRegistroId(
+          client.id,
+        );
+        return { ...client, observaciones };
+      }),
+    );
+
     // === AGRUPAR POR DÍA ===
     const grouped: Record<string, Client[]> = {};
 
-    clients.forEach((client) => {
+    clientsWithObservations.forEach((client) => {
       const day = client.dia_mantencion || 'Sin Día';
       if (!grouped[day]) grouped[day] = [];
       grouped[day].push(client);

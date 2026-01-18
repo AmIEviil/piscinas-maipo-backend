@@ -18,6 +18,9 @@ import { ObservacionesController } from './observaciones/observaciones.controlle
 import { ObservacionesModule } from './observaciones/observaciones.module';
 import { TasksModule } from './tasks/tasks.module';
 import { PdfModule } from './pdf/pdf.module';
+import { GoogleDriveModule } from './google-drive/google-drive.module';
+import { UploadedFilesModule } from './uploaded-files/uploaded-files.module';
+import { PagosModule } from './pagos/pagos.module';
 
 @Module({
   imports: [
@@ -54,6 +57,9 @@ import { PdfModule } from './pdf/pdf.module';
     ObservacionesModule,
     TasksModule,
     PdfModule,
+    GoogleDriveModule,
+    UploadedFilesModule,
+    PagosModule,
   ],
   controllers: [AppController, ObservacionesController],
   providers: [AppService],

@@ -10,6 +10,7 @@ import { Role } from '../users/entities/role.entity';
 import { RoleUser } from '../users/entities/role-user.entity';
 import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
+import googleOauthConfig from './config/google-oauth.config';
 
 @Module({
   controllers: [AuthController],
@@ -33,6 +34,7 @@ import { JwtModule } from '@nestjs/jwt';
         };
       },
     }),
+    ConfigModule.forFeature(googleOauthConfig),
   ],
   exports: [TypeOrmModule, JwtStrategy, PassportModule, JwtModule, AuthService],
 })

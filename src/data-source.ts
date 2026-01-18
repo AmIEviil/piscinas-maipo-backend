@@ -13,6 +13,8 @@ import { User } from './users/entities/user.entity';
 import { Role } from './users/entities/role.entity';
 import { RoleUser } from './users/entities/role-user.entity';
 import { RevestimientoImagen } from './revestimientos/entities/revestimiento-imagen.entity';
+import { UploadedFiles } from './uploaded-files/entities/uploaded-files.entity';
+import { ComprobantePago } from './pagos/entities/comprobante-pago.entity';
 
 dotenv.config();
 
@@ -37,6 +39,8 @@ export const AppDataSource = new DataSource({
     Role,
     RoleUser,
     RevestimientoImagen,
+    UploadedFiles,
+    ComprobantePago,
   ],
   migrations: [__dirname + '/migrations/*{.ts,.js}'],
 });

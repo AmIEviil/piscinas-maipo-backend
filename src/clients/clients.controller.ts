@@ -8,12 +8,21 @@ import {
   Body,
   Query,
   UseGuards,
+  Req,
 } from '@nestjs/common';
+import type { Request } from 'express';
 import { ClientsService } from './clients.service';
 import { Client } from './entities/clients.entity';
 import { CreateClientDto } from './dto/CreateClient.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { UpdateCampoDto } from './dto/Campos.dto';
+import { UpdateClientDto } from './dto/UpdateClient.dto';
+
+type AuthenticatedRequest = Request & {
+  user?: {
+    id?: string;
+  };
+};
 
 @Controller('clients')
 @UseGuards(JwtAuthGuard)
@@ -61,9 +70,12 @@ export class ClientsController {
   @Put('update/:id')
   update(
     @Param('id') id: string,
-    @Body() client: Partial<Client>,
+    @Body() client: UpdateClientDto,
+    @Req() req: AuthenticatedRequest,
   ): Promise<Client> {
-    return this.clientService.update(id, client);
+    const userId = req.user?.id ?? 'Unknown';
+    console.log('Usuario que hizo la petición:', userId);
+    return this.clientService.update(id, client, userId);
   }
 
   @Delete('delete/:id')
