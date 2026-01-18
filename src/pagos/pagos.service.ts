@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ComprobantePago } from './entities/comprobante-pago.entity';
 import { Repository } from 'typeorm';
-import { GoogleDriveService } from 'google-drive/google-drive.service';
+import { GoogleDriveService } from '../google-drive/google-drive.service';
 import {
   ComprobantePagoWithUrlDto,
   CreateComprobantePagoDto,
