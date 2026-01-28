@@ -95,15 +95,15 @@ export class ProductsService {
 
   async createProduct(productData: Partial<Product>): Promise<Product> {
     const newProduct = this.productRepository.create(productData);
+    const savedProduct = await this.productRepository.save(newProduct);
     const historyEntry = this.productHistoryRepository.create({
-      product: newProduct,
+      product: savedProduct,
       precio_anterior: 0,
-      precio_nuevo: newProduct.valor_unitario || 0,
+      precio_nuevo: savedProduct.valor_unitario || 0,
     });
     await this.productHistoryRepository.save(historyEntry);
-    return this.productRepository.save(newProduct);
+    return savedProduct;
   }
-
   async createProductType(
     productData: Partial<ProductType>,
   ): Promise<ProductType> {
