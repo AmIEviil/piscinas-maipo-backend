@@ -13,22 +13,12 @@ import { UpdateClientDto } from './dto/UpdateClient.dto';
 export class ClientsService {
   constructor(
     @InjectRepository(Client)
-    private clientRepository: Repository<Client>,
+    private readonly clientRepository: Repository<Client>,
 
     private readonly observacionesService: ObservacionesService,
   ) {}
 
   private readonly tipoEntidad = 'client';
-  private readonly DAYS_ORDER = [
-    'Lunes',
-    'Martes',
-    'Miércoles',
-    'Jueves',
-    'Viernes',
-    'Sábado',
-    'Domingo',
-    'Sin Día',
-  ];
 
   findAll(): Promise<Client[]> {
     return this.clientRepository.find();

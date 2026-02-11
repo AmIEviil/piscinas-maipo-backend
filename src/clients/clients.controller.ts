@@ -74,7 +74,6 @@ export class ClientsController {
     @Req() req: AuthenticatedRequest,
   ): Promise<Client> {
     const userId = req.user?.id ?? 'Unknown';
-    console.log('Usuario que hizo la petición:', userId);
     return this.clientService.update(id, client, userId);
   }
 

@@ -10,7 +10,10 @@ import {
 } from '@nestjs/common';
 import { MaintenanceService } from './maintenance.service';
 import { Maintenance } from './entities/maintenance.entity';
-import { CreateMaintenanceDto } from './dto/CreateMaintenanceDto';
+import {
+  CreateMaintenanceDto,
+  UpdateMaintenanceDto,
+} from './dto/CreateMaintenanceDto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @Controller('maintenances')
@@ -33,10 +36,7 @@ export class MaintenanceController {
   }
 
   @Put(':id')
-  update(
-    @Param('id') id: string,
-    @Body() maintenance: Partial<Maintenance>,
-  ): Promise<Maintenance> {
+  update(@Param('id') id: string, @Body() maintenance: UpdateMaintenanceDto) {
     return this.maintenanceService.update(id, maintenance);
   }
 

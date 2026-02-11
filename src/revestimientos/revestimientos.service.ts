@@ -10,10 +10,10 @@ import { IRevestimientoCreate } from './dto/CreateRevestimiento.dto';
 export class RevestimientosService {
   constructor(
     @InjectRepository(Revestimiento)
-    private revestimientoRepository: Repository<Revestimiento>,
+    private readonly revestimientoRepository: Repository<Revestimiento>,
 
     @InjectRepository(ExtraRevestimiento)
-    private extraRevestimientoRepository: Repository<ExtraRevestimiento>,
+    private readonly extraRevestimientoRepository: Repository<ExtraRevestimiento>,
   ) {}
 
   async findByFilter(

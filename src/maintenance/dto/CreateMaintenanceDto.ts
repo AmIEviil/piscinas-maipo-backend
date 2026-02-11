@@ -45,3 +45,30 @@ export class CreateMaintenanceDto {
   @IsOptional()
   observaciones: string;
 }
+
+export class UpdateMaintenanceDto {
+  @IsOptional()
+  @IsString()
+  fechaMantencion?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  realizada?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  recibioPago?: boolean;
+
+  @IsOptional()
+  @IsNumber()
+  valorMantencion?: number;
+
+  @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => CreateMaintenanceProductDto)
+  productosUsados?: CreateMaintenanceProductDto[];
+
+  @IsOptional()
+  @IsString()
+  observaciones?: string;
+}
