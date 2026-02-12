@@ -3,7 +3,7 @@ import { UploadedFilesService } from './uploaded-files.service';
 import { UploadedFilesController } from './uploaded-files.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UploadedFiles } from './entities/uploaded-files.entity';
-import { GoogleDriveModule } from 'google-drive/google-drive.module';
+import { GoogleDriveModule } from '../google-drive/google-drive.module';
 
 @Module({
   providers: [UploadedFilesService],

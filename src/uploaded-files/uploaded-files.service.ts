@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UploadedFiles } from './entities/uploaded-files.entity';
 import { Repository } from 'typeorm';
-import { GoogleDriveService } from 'google-drive/google-drive.service';
+import { GoogleDriveService } from '../google-drive/google-drive.service';
 
 @Injectable()
 export class UploadedFilesService {
