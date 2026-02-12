@@ -14,7 +14,10 @@ export class ComprobantePago {
   @Column('text')
   fecha_emision: string;
 
-  @Column('text')
+  @Column({ name: 'monto', type: 'int', nullable: true })
+  monto: number;
+
+  @Column({ type: 'text', nullable: true })
   fileId: string;
 
   @Column({ type: 'uuid', nullable: false })

@@ -11,6 +11,7 @@ export interface CreateComprobantePagoDto {
   tipo: string;
   nombre: string;
   fecha_emision: string;
+  monto?: number;
   parentId: string;
 }
 

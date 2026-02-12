@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UploadedFiles } from './entities/uploaded-files.entity';
 import { Repository } from 'typeorm';
+import { GoogleDriveService } from 'google-drive/google-drive.service';
 
 @Injectable()
 export class UploadedFilesService {
@@ -10,6 +11,8 @@ export class UploadedFilesService {
   constructor(
     @InjectRepository(UploadedFiles)
     private readonly uploadedFilesRepository: Repository<UploadedFiles>,
+
+    private readonly googleDriveService: GoogleDriveService,
   ) {}
 
   async create(fileData: Partial<UploadedFiles>): Promise<UploadedFiles> {
@@ -41,10 +44,27 @@ export class UploadedFilesService {
   async findByParentId(parentId: string): Promise<UploadedFiles[]> {
     this.logger.log(`Buscando archivos por Parent ID: ${parentId}`);
 
-    const query =
-      this.uploadedFilesRepository.createQueryBuilder('uploadedFiles');
+    const results = await this.uploadedFilesRepository.find({
+      where: { parentId },
+    });
 
-    query.where('uploadedFiles.parentId = :parentId', { parentId });
-    return query.getMany();
+    this.logger.log(
+      `Encontrados ${results.length} archivos para Parent ID: ${parentId}`,
+      results,
+    );
+
+    const files: UploadedFiles[] = [];
+    for (const fileRecord of results) {
+      const fileDetails = await this.googleDriveService.generateViewLink(
+        String(fileRecord.driveId),
+      );
+      const fileWithUrl = {
+        ...fileRecord,
+        driveUrl: fileDetails,
+      };
+      files.push(fileWithUrl);
+    }
+
+    return files;
   }
 }

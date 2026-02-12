@@ -12,11 +12,11 @@ import { UploadedFiles } from '../uploaded-files/entities/uploaded-files.entity'
 
 @Injectable()
 export class GoogleDriveService {
-  private driveClient;
+  private readonly driveClient;
 
   constructor(
     @InjectRepository(UploadedFiles)
-    private uploadedFilesRepository: Repository<UploadedFiles>,
+    private readonly uploadedFilesRepository: Repository<UploadedFiles>,
   ) {
     const clientId = process.env.GOOGLE_CLIENT_ID;
     const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
@@ -60,6 +60,8 @@ export class GoogleDriveService {
           name: filename,
           parents: folderId ? [folderId] : [],
           mimeType: mimeType,
+          role: 'reader',
+          type: 'anyone',
         },
         media: {
           mimeType: mimeType,
@@ -125,5 +127,15 @@ export class GoogleDriveService {
     });
 
     return `https://drive.google.com/file/d/${fileId}/preview`;
+  }
+
+  async deleteFile(fileId: string): Promise<void> {
+    try {
+      await this.driveClient.files.delete({ fileId });
+      console.log(`Archivo con ID ${fileId} eliminado de Google Drive.`);
+    } catch (error) {
+      console.error(`Error eliminando archivo ${fileId}:`, error);
+      throw error;
+    }
   }
 }

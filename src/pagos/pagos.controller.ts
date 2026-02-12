@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Logger,
   Param,
@@ -32,10 +33,10 @@ export class PagosController {
   @Post('/upload')
   @UseInterceptors(FileInterceptor('file'))
   async createComprobantePago(
-    @UploadedFile() file: Express.Multer.File,
     @Body() dto: CreateComprobantePagoDto,
+    @UploadedFile() file?: Express.Multer.File,
   ) {
-    this.logger.log('Creando un nuevo comprobante de pago');
+    this.logger.log('Creando un nuevo comprobante de pago', { dto });
     return await this.pagosService.createComprobantePago(dto, file);
   }
 
@@ -45,5 +46,11 @@ export class PagosController {
       `Obteniendo comprobantes de pago con parentId: ${parentId}`,
     );
     return this.pagosService.findByParentId(parentId);
+  }
+
+  @Delete(':id')
+  async deleteComprobantePago(@Param('id') id: string) {
+    this.logger.log(`Eliminando comprobante de pago con id: ${id}`);
+    return await this.pagosService.deleteComprobantePago(id);
   }
 }
