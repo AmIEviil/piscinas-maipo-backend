@@ -21,6 +21,8 @@ jobs:
             set -e
             cd /home/ubuntu/piscinas-elmaipo/backend
 
+            rm -rf dist
+
             git fetch origin
             git reset --hard origin/main
             
