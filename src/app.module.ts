@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
@@ -21,12 +23,22 @@ import { PdfModule } from './pdf/pdf.module';
 import { GoogleDriveModule } from './google-drive/google-drive.module';
 import { UploadedFilesModule } from './uploaded-files/uploaded-files.module';
 import { PagosModule } from './pagos/pagos.module';
+import { EmpleadosModule } from './empleados/empleados.module';
+import { VehiclesModule } from './vehicles/vehicles.module';
+import { GlobalJwtAuthGuard } from './auth/guards/global-jwt-auth.guard';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    ThrottlerModule.forRoot([
+      {
+        name: 'global',
+        ttl: 60_000,
+        limit: 120,
+      },
+    ]),
     TypeOrmModule.forRoot({
       type: 'postgres',
       host: process.env.DB_HOST,
@@ -38,8 +50,8 @@ import { PagosModule } from './pagos/pagos.module';
       synchronize: true, // Solo en desarrollo
       // migrationsRun: true,
       extra: {
-        max: 10, // <= conexiones máximas por instancia
-        idleTimeoutMillis: 30000, // cierra conexiones inactivas tras 30s
+        max: 10,
+        idleTimeoutMillis: 30000,
       },
       migrations: [__dirname + '/migrations/*{.ts,.js}'],
     }),
@@ -60,8 +72,14 @@ import { PagosModule } from './pagos/pagos.module';
     GoogleDriveModule,
     UploadedFilesModule,
     PagosModule,
+    EmpleadosModule,
+    VehiclesModule,
   ],
   controllers: [AppController, ObservacionesController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    { provide: APP_GUARD, useClass: GlobalJwtAuthGuard },
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
+  ],
 })
 export class AppModule {}

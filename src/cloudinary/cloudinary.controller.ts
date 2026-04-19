@@ -4,24 +4,27 @@ import {
   Delete,
   Get,
   Param,
+  ParseUUIDPipe,
   Post,
   UploadedFile,
-  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { CloudinaryService } from './cloudinary.service';
 import { AddImagesBulkDto } from './dto/create-images.dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { FileValidationPipe } from '../utils/file-validation.pipe';
 
 @Controller('upload')
-@UseGuards(JwtAuthGuard)
 export class CloudinaryController {
   constructor(private readonly cloudinaryService: CloudinaryService) {}
 
   @Post()
-  @UseInterceptors(FileInterceptor('file'))
-  async uploadFile(@UploadedFile() file: Express.Multer.File) {
+  @UseInterceptors(
+    FileInterceptor('file', { limits: { fileSize: 10 * 1024 * 1024 } }),
+  )
+  async uploadFile(
+    @UploadedFile(new FileValidationPipe('image')) file: Express.Multer.File,
+  ) {
     const result = await this.cloudinaryService.uploadImage(file);
     return {
       url: result.secure_url,
@@ -30,7 +33,10 @@ export class CloudinaryController {
   }
 
   @Post('revestimiento/:id/imagenes/bulk')
-  async addImagesBulk(@Param('id') id: string, @Body() body: AddImagesBulkDto) {
+  async addImagesBulk(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() body: AddImagesBulkDto,
+  ) {
     return this.cloudinaryService.addImagesBulk(id, body.imagenes);
   }
 
@@ -40,7 +46,7 @@ export class CloudinaryController {
   }
 
   @Delete(':imagenId')
-  async delete(@Param('imagenId') imagenId: string) {
+  async delete(@Param('imagenId', ParseUUIDPipe) imagenId: string) {
     return this.cloudinaryService.deleteImage(imagenId);
   }
 

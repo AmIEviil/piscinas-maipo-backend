@@ -8,7 +8,7 @@ import { CreateRepairDto, FilterRepairDto } from './dto/FilterRepair.dto';
 export class RepairsService {
   constructor(
     @InjectRepository(Repair)
-    private repairsRepository: Repository<Repair>,
+    private readonly repairsRepository: Repository<Repair>,
   ) {}
 
   async findAllRepairs(filters: FilterRepairDto): Promise<Repair[]> {

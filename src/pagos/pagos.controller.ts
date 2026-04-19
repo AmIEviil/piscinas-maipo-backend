@@ -12,6 +12,7 @@ import {
 import { PagosService } from './pagos.service';
 import { CreateComprobantePagoDto } from './dto/comprobante-pago.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { FileValidationPipe } from '../utils/file-validation.pipe';
 
 @Controller('pagos')
 export class PagosController {
@@ -31,10 +32,10 @@ export class PagosController {
   }
 
   @Post('/upload')
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 10 * 1024 * 1024 } }))
   async createComprobantePago(
     @Body() dto: CreateComprobantePagoDto,
-    @UploadedFile() file?: Express.Multer.File,
+    @UploadedFile(new FileValidationPipe('document')) file?: Express.Multer.File,
   ) {
     this.logger.log('Creando un nuevo comprobante de pago', { dto });
     return await this.pagosService.createComprobantePago(dto, file);

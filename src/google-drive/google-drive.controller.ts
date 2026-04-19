@@ -4,17 +4,18 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 import {
   Controller,
-  Post,
   Get,
-  Param,
-  UseInterceptors,
-  UploadedFile,
-  Res,
   Logger,
+  Param,
+  Post,
+  Res,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { GoogleDriveService } from './google-drive.service';
+import { FileValidationPipe } from '../utils/file-validation.pipe';
 
 @Controller('drive')
 export class GoogleDriveController {
@@ -22,9 +23,9 @@ export class GoogleDriveController {
   constructor(private readonly driveService: GoogleDriveService) {}
 
   @Post('upload/:parentId')
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 10 * 1024 * 1024 } }))
   async upload(
-    @UploadedFile() file: Express.Multer.File,
+    @UploadedFile(new FileValidationPipe('document')) file: Express.Multer.File,
     @Param('parentId') parentId: string,
   ) {
     this.logger.log(`Subiendo archivo: ${file.originalname}`);

@@ -6,35 +6,52 @@ import {
   Param,
   ParseUUIDPipe,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
 import { ConfigureAccountDto } from './dto/configure-user.dto';
 import { RequestPasswordResetDto } from './dto/request-password-reset.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { Public } from './decorators/public.decorator';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @Post('register')
-  create(@Body() createUserDto: CreateUserDto) {
-    return this.authService.createUser(createUserDto);
-  }
-
+  @Public()
+  @Throttle({ default: { ttl: 900_000, limit: 5 } })
   @Post('login')
   async loginUser(@Body() loginUserDto: LoginUserDto) {
     return this.authService.login(loginUserDto);
   }
 
+  @Public()
+  @Throttle({ default: { ttl: 900_000, limit: 5 } })
   @Post('request-password-reset')
   async requestPasswordReset(@Body() dto: RequestPasswordResetDto) {
     return this.authService.requestPasswordReset(dto.email);
   }
 
+  @Public()
+  @Throttle({ default: { ttl: 900_000, limit: 5 } })
   @Patch('reset-password')
   async resetPassword(@Body() dto: ResetPasswordDto) {
     return this.authService.resetPassword(dto.token, dto.newPassword);
+  }
+
+  @Public()
+  @Throttle({ default: { ttl: 900_000, limit: 5 } })
+  @Post('refreshToken')
+  async refresh(@Body('refreshToken') token: string) {
+    return this.authService.refreshToken(token);
+  }
+
+  // Protected routes below (require valid JWT)
+
+  @Post('register')
+  create(@Body() createUserDto: CreateUserDto) {
+    return this.authService.createUser(createUserDto);
   }
 
   @Patch('configure/:id')
@@ -47,14 +64,9 @@ export class AuthController {
 
   @Patch('setLogout/:id')
   async setSessionClosedAt(
-    @Param('id') userId: string,
+    @Param('id', ParseUUIDPipe) userId: string,
     @Body('logout_at') logout_at: string,
   ) {
     return this.authService.setSessionClosedAt(userId, logout_at);
-  }
-
-  @Post('refreshToken')
-  async refresh(@Body('refreshToken') token: string) {
-    return this.authService.refreshToken(token);
   }
 }

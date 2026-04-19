@@ -2,6 +2,7 @@ import {
   IsEmail,
   IsString,
   MinLength,
+  MaxLength,
   IsOptional,
   IsBoolean,
   IsUUID,
@@ -11,17 +12,21 @@ export class CreateUserDto {
   @IsOptional()
   @IsString()
   @MinLength(1)
+  @MaxLength(50)
   user_name: string;
 
   @IsEmail()
+  @MaxLength(254)
   email: string;
 
   @IsString()
   @MinLength(1)
+  @MaxLength(100)
   first_name: string;
 
   @IsString()
   @MinLength(1)
+  @MaxLength(100)
   last_name: string;
 
   @IsOptional()
@@ -29,5 +34,5 @@ export class CreateUserDto {
   isActive?: boolean;
 
   @IsUUID()
-  roleId: string; // ID del rol que quieres asignar
+  roleId: string;
 }
