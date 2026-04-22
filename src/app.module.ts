@@ -47,7 +47,7 @@ import { GlobalJwtAuthGuard } from './auth/guards/global-jwt-auth.guard';
       password: process.env.DB_PASSWORD,
       database: process.env.DB_NAME,
       autoLoadEntities: true,
-      synchronize: true, // Solo en desarrollo
+      synchronize: process.env.NODE_ENV !== 'production', // Solo en desarrollo
       // migrationsRun: true,
       extra: {
         max: 10,
