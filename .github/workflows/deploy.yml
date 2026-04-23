@@ -21,9 +21,14 @@ jobs:
             set -e
             export PATH=$PATH:/usr/local/bin
             echo "Conectado al servidor. Iniciando despliegue..."
+            
+            # Autorizar directorio en Git
+            git config --global --add safe.directory /opt/piscinas/backend || true
+            
             cd /opt/piscinas/backend
             git fetch origin
             git reset --hard origin/main
+            
             cd /opt/piscinas
             echo "Reconstruyendo contenedores (esto puede tardar)..."
             docker-compose build --no-cache backend
