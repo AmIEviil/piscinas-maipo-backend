@@ -22,6 +22,10 @@ jobs:
             export PATH=$PATH:/usr/local/bin
             echo "Conectado al servidor. Iniciando despliegue..."
             
+            # Asegurar permisos y dueño
+            chown -R root:root /opt/piscinas/backend
+            chmod -R 755 /opt/piscinas/backend
+            
             # Autorizar directorio en Git
             git config --global --add safe.directory /opt/piscinas/backend || true
             
