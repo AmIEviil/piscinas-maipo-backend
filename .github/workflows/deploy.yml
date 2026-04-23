@@ -10,18 +10,23 @@ jobs:
 
     steps:
       - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1.0.0
+        uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
+          port: 22
+          command_timeout: 30m
           script: |
             set -e
             export PATH=$PATH:/usr/local/bin
+            echo "Conectado al servidor. Iniciando despliegue..."
             cd /opt/piscinas/backend
             git fetch origin
             git reset --hard origin/main
             cd /opt/piscinas
+            echo "Reconstruyendo contenedores (esto puede tardar)..."
             docker-compose build --no-cache backend
             docker-compose up -d backend
             docker image prune -f
+            echo "Despliegue finalizado con éxito."
