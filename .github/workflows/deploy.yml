@@ -14,18 +14,13 @@ jobs:
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
-          key: |
-            ${{ secrets.SERVER_SSH_KEY }}
-          debug: true
+          key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
             set -e
-            cd /home/ubuntu/piscinas-elmaipo/backend
-
-            rm -rf dist
-
+            cd /opt/piscinas/backend
             git fetch origin
             git reset --hard origin/main
-            
-            npm install --legacy-peer-deps
-            npm run build
-            pm2 restart piscinas-backend --update-env
+            cd /opt/piscinas
+            docker-compose build --no-cache backend
+            docker-compose up -d backend
+            docker image prune -f
