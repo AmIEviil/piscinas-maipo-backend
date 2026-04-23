@@ -11,7 +11,7 @@ import {
 import { VehiclesService } from './vehicles.service';
 import { Vehicle } from './entities/vehicle.entity';
 import { FilterVehiclesDto } from './dto/filterVehicles.dto';
-import { UploadedFiles } from 'uploaded-files/entities/uploaded-files.entity';
+import { UploadedFiles } from '../uploaded-files/entities/uploaded-files.entity';
 
 @Controller('vehicles')
 export class VehiclesController {
