@@ -28,6 +28,9 @@ export class Product {
   @Column({ nullable: true, type: 'int', default: 0 })
   cant_disponible: number;
 
+  @Column({ nullable: true, type: 'int', default: null })
+  stock_minimo: number | null;
+
   @OneToMany(() => ProductHistory, (history) => history.product)
   historial: ProductHistory[];
 
