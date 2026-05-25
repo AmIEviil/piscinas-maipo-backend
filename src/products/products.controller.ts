@@ -32,6 +32,11 @@ export class ProductsController {
     return this.productsService.findByFilters({ nombre, tipoId });
   }
 
+  @Get('low-stock')
+  getLowStockProducts() {
+    return this.productsService.getLowStockProducts();
+  }
+
   @Get('metrics')
   getMetrics() {
     return this.productsService.getProductMetrics();

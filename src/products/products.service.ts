@@ -173,4 +173,13 @@ export class ProductsService {
       throw new NotFoundException(`ProductType with id ${id} not found`);
     }
   }
+
+  async getLowStockProducts(): Promise<Product[]> {
+    return this.productRepository
+      .createQueryBuilder('product')
+      .innerJoinAndSelect('product.tipo', 'tipo')
+      .where('product.stock_minimo IS NOT NULL')
+      .andWhere('product.cant_disponible <= product.stock_minimo')
+      .getMany();
+  }
 }
