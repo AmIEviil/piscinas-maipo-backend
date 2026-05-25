@@ -9,7 +9,6 @@
     "target": "ES2023",
     "sourceMap": true,
     "outDir": "./dist",
-    "baseUrl": "./src",
     "incremental": true,
     "skipLibCheck": true,
     "strictNullChecks": true,
@@ -19,14 +18,9 @@
     "noFallthroughCasesInSwitch": false,
     "strictPropertyInitialization": false,
     "paths": {
-      "@/*": [""],
-      "@modules/*": ["modules/*"],
-      "@clients/*": ["clients/*"],
-      "@products/*": ["products/*"],
-      "@maintenances/*": ["maintenances/*"],
-      "@revestimientos/*": ["revestimientos/*"],
-      "@repairs/*": ["repairs/*"],
-      "@utils/*": ["utils/*"]
-    }
+      "src/*": ["./src/*"]
+    },
+    "lib": ["ES2022", "DOM"],
+    "types": ["node", "jest", "multer"]
   }
 }
