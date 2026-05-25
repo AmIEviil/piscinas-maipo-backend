@@ -1,8 +1,9 @@
 FROM node:20-alpine AS builder
 WORKDIR /app
+# Primero solo copiamos archivos de dependencias para aprovechar la caché de Docker
 COPY package.json yarn.lock ./
-# Quitamos --frozen-lockfile para asegurar que se instalen todos los módulos necesarios
 RUN yarn install
+# Recién ahora copiamos el código y compilamos
 COPY . .
 RUN yarn build
 

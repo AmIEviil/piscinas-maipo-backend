@@ -29,10 +29,10 @@ jobs:
             cd /opt/piscinas/backend
             git fetch origin
             git reset --hard origin/main
-            
             cd /opt/piscinas
             echo "Reconstruyendo contenedores..."
-            docker-compose build --no-cache backend
+            # Quitamos --no-cache para que sea 5 veces más rápido
+            docker-compose build backend
             docker-compose up -d backend
             docker image prune -f
             echo "Despliegue finalizado con éxito."
