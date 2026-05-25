@@ -124,7 +124,7 @@ export class MaintenanceService {
           if (!mapNuevos.has(actual.product.id)) {
             // Devolvemos el stock
             await manager.increment(
-              'Product',
+              Product,
               { id: actual.product.id },
               'cant_disponible',
               actual.cantidad,
@@ -194,7 +194,7 @@ export class MaintenanceService {
                 );
               } else {
                 await manager.increment(
-                  'Product',
+                  Product,
                   { id: nuevo.productId },
                   'cant_disponible',
                   Math.abs(diff),
