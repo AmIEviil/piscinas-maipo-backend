@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Maintenance } from './entities/maintenance.entity';
@@ -7,6 +7,7 @@ import {
   UpdateMaintenanceDto,
 } from './dto/CreateMaintenanceDto';
 import { MaintenanceProduct } from './entities/maintenance-product.entity';
+import { Product } from '../products/entities/product.entity';
 
 @Injectable()
 export class MaintenanceService {
@@ -43,6 +44,23 @@ export class MaintenanceService {
 
       // Crear productos asociados
       if (dto.productosUsados && dto.productosUsados.length > 0) {
+        // Validar stock antes de cualquier decremento
+        for (const p of dto.productosUsados) {
+          const product = await manager.findOne(Product, {
+            where: { id: p.productId },
+          });
+          if (!product) {
+            throw new NotFoundException(
+              `Producto con id ${p.productId} no encontrado`,
+            );
+          }
+          if (product.cant_disponible < p.cantidad) {
+            throw new BadRequestException(
+              `Sin stock suficiente para "${product.nombre}": disponible ${product.cant_disponible}, requerido ${p.cantidad}`,
+            );
+          }
+        }
+
         const productsToInsert = dto.productosUsados.map((p) =>
           manager.create(MaintenanceProduct, {
             maintenance: newMaintenance,
@@ -52,7 +70,7 @@ export class MaintenanceService {
         );
         const updateDisponibles = dto.productosUsados.map(async (p) => {
           await manager.decrement(
-            'Product',
+            Product,
             { id: p.productId },
             'cant_disponible',
             p.cantidad,
@@ -121,8 +139,22 @@ export class MaintenanceService {
           const existente = mapActuales.get(nuevo.productId);
 
           if (!existente) {
+            const product = await manager.findOne(Product, {
+              where: { id: nuevo.productId },
+            });
+            if (!product) {
+              throw new NotFoundException(
+                `Producto con id ${nuevo.productId} no encontrado`,
+              );
+            }
+            if (product.cant_disponible < nuevo.cantidad) {
+              throw new BadRequestException(
+                `Sin stock suficiente para "${product.nombre}": disponible ${product.cant_disponible}, requerido ${nuevo.cantidad}`,
+              );
+            }
+
             await manager.decrement(
-              'Product',
+              Product,
               { id: nuevo.productId },
               'cant_disponible',
               nuevo.cantidad,
@@ -141,8 +173,21 @@ export class MaintenanceService {
 
             if (diff !== 0) {
               if (diff > 0) {
+                const product = await manager.findOne(Product, {
+                  where: { id: nuevo.productId },
+                });
+                if (!product) {
+                  throw new NotFoundException(
+                    `Producto con id ${nuevo.productId} no encontrado`,
+                  );
+                }
+                if (product.cant_disponible < diff) {
+                  throw new BadRequestException(
+                    `Sin stock suficiente para "${product.nombre}": disponible ${product.cant_disponible}, requerido ${diff} adicionales`,
+                  );
+                }
                 await manager.decrement(
-                  'Product',
+                  Product,
                   { id: nuevo.productId },
                   'cant_disponible',
                   diff,
