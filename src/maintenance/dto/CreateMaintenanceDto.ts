@@ -4,6 +4,7 @@ import {
   IsNumber,
   ValidateNested,
   IsOptional,
+  Min,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -17,6 +18,7 @@ export class CreateMaintenanceProductDto {
   productId: string;
 
   @IsNumber()
+  @Min(1)
   cantidad: number;
 }
 

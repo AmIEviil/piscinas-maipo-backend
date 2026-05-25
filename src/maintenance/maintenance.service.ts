@@ -44,10 +44,20 @@ export class MaintenanceService {
 
       // Crear productos asociados
       if (dto.productosUsados && dto.productosUsados.length > 0) {
+        // Verificar ids duplicados
+        const ids = dto.productosUsados.map((p) => p.productId);
+        const uniqueIds = new Set(ids);
+        if (uniqueIds.size !== ids.length) {
+          throw new BadRequestException(
+            'No se puede agregar el mismo producto dos veces en una mantención',
+          );
+        }
+
         // Validar stock antes de cualquier decremento
         for (const p of dto.productosUsados) {
           const product = await manager.findOne(Product, {
             where: { id: p.productId },
+            lock: { mode: 'pessimistic_write' },
           });
           if (!product) {
             throw new NotFoundException(
@@ -113,6 +123,15 @@ export class MaintenanceService {
 
       // 2. Lógica de Productos (Manejo de Stock e Items)
       if (dto.productosUsados) {
+        // Verificar ids duplicados
+        const ids = dto.productosUsados.map((p) => p.productId);
+        const uniqueIds = new Set(ids);
+        if (uniqueIds.size !== ids.length) {
+          throw new BadRequestException(
+            'No se puede agregar el mismo producto dos veces en una mantención',
+          );
+        }
+
         const actuales = maintenance.productos;
         const nuevos = dto.productosUsados;
 
@@ -141,6 +160,7 @@ export class MaintenanceService {
           if (!existente) {
             const product = await manager.findOne(Product, {
               where: { id: nuevo.productId },
+              lock: { mode: 'pessimistic_write' },
             });
             if (!product) {
               throw new NotFoundException(
@@ -175,6 +195,7 @@ export class MaintenanceService {
               if (diff > 0) {
                 const product = await manager.findOne(Product, {
                   where: { id: nuevo.productId },
+                  lock: { mode: 'pessimistic_write' },
                 });
                 if (!product) {
                   throw new NotFoundException(
