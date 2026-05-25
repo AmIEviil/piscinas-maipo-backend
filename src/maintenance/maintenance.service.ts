@@ -135,6 +135,48 @@ export class MaintenanceService {
         const actuales = maintenance.productos;
         const nuevos = dto.productosUsados;
 
+        // Pre-flight: validate all stock changes before any mutation
+        const mapActualesPreFlight = new Map(actuales.map((p) => [p.product.id, p]));
+        for (const nuevo of nuevos) {
+          const existente = mapActualesPreFlight.get(nuevo.productId);
+          if (!existente) {
+            // New product — needs full qty
+            const product = await manager.findOne(Product, {
+              where: { id: nuevo.productId },
+              lock: { mode: 'pessimistic_write' },
+            });
+            if (!product) {
+              throw new NotFoundException(
+                `Producto con id ${nuevo.productId} no encontrado`,
+              );
+            }
+            if (product.cant_disponible < nuevo.cantidad) {
+              throw new BadRequestException(
+                `Sin stock suficiente para "${product.nombre}": disponible ${product.cant_disponible}, requerido ${nuevo.cantidad}`,
+              );
+            }
+          } else {
+            const diff = nuevo.cantidad - existente.cantidad;
+            if (diff > 0) {
+              // Increased quantity — needs diff more
+              const product = await manager.findOne(Product, {
+                where: { id: nuevo.productId },
+                lock: { mode: 'pessimistic_write' },
+              });
+              if (!product) {
+                throw new NotFoundException(
+                  `Producto con id ${nuevo.productId} no encontrado`,
+                );
+              }
+              if (product.cant_disponible < diff) {
+                throw new BadRequestException(
+                  `Sin stock suficiente para "${product.nombre}": disponible ${product.cant_disponible}, requerido ${diff} adicionales`,
+                );
+              }
+            }
+          }
+        }
+
         const mapActuales = new Map(actuales.map((p) => [p.product.id, p]));
         const mapNuevos = new Map(nuevos.map((p) => [p.productId, p]));
 
@@ -158,21 +200,6 @@ export class MaintenanceService {
           const existente = mapActuales.get(nuevo.productId);
 
           if (!existente) {
-            const product = await manager.findOne(Product, {
-              where: { id: nuevo.productId },
-              lock: { mode: 'pessimistic_write' },
-            });
-            if (!product) {
-              throw new NotFoundException(
-                `Producto con id ${nuevo.productId} no encontrado`,
-              );
-            }
-            if (product.cant_disponible < nuevo.cantidad) {
-              throw new BadRequestException(
-                `Sin stock suficiente para "${product.nombre}": disponible ${product.cant_disponible}, requerido ${nuevo.cantidad}`,
-              );
-            }
-
             await manager.decrement(
               Product,
               { id: nuevo.productId },
@@ -193,20 +220,6 @@ export class MaintenanceService {
 
             if (diff !== 0) {
               if (diff > 0) {
-                const product = await manager.findOne(Product, {
-                  where: { id: nuevo.productId },
-                  lock: { mode: 'pessimistic_write' },
-                });
-                if (!product) {
-                  throw new NotFoundException(
-                    `Producto con id ${nuevo.productId} no encontrado`,
-                  );
-                }
-                if (product.cant_disponible < diff) {
-                  throw new BadRequestException(
-                    `Sin stock suficiente para "${product.nombre}": disponible ${product.cant_disponible}, requerido ${diff} adicionales`,
-                  );
-                }
                 await manager.decrement(
                   Product,
                   { id: nuevo.productId },
