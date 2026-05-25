@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Maintenance } from './entities/maintenance.entity';
@@ -13,7 +17,7 @@ import { Product } from '../products/entities/product.entity';
 export class MaintenanceService {
   constructor(
     @InjectRepository(Maintenance)
-    private maintenanceRepository: Repository<Maintenance>,
+    private readonly maintenanceRepository: Repository<Maintenance>,
   ) {}
 
   findAll(): Promise<Maintenance[]> {
@@ -136,7 +140,9 @@ export class MaintenanceService {
         const nuevos = dto.productosUsados;
 
         // Pre-flight: validate all stock changes before any mutation
-        const mapActualesPreFlight = new Map(actuales.map((p) => [p.product.id, p]));
+        const mapActualesPreFlight = new Map(
+          actuales.map((p) => [p.product.id, p]),
+        );
         for (const nuevo of nuevos) {
           const existente = mapActualesPreFlight.get(nuevo.productId);
           if (!existente) {

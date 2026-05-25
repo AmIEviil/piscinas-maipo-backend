@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-return */
+
 import {
   Controller,
   Get,
@@ -23,7 +23,9 @@ export class GoogleDriveController {
   constructor(private readonly driveService: GoogleDriveService) {}
 
   @Post('upload/:parentId')
-  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 10 * 1024 * 1024 } }))
+  @UseInterceptors(
+    FileInterceptor('file', { limits: { fileSize: 10 * 1024 * 1024 } }),
+  )
   async upload(
     @UploadedFile(new FileValidationPipe('document')) file: Express.Multer.File,
     @Param('parentId') parentId: string,

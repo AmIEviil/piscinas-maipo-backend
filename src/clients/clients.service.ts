@@ -94,7 +94,6 @@ export class ClientsService {
       });
       if (!existing) throw new NotFoundException('Client not found');
       const updatedClient = this.clientRepository.merge(existing, {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         [campoDto.campo]: campoDto.valor,
       });
       if (campoDto.campo === 'observacion') {
