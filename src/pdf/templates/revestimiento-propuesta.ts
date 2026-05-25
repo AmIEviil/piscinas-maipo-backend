@@ -1,6 +1,8 @@
-import { Revestimiento } from '@revestimientos/entities/revestimiento.entity';
+import { Revestimiento } from '../../revestimientos/entities/revestimiento.entity';
+
 import * as fs from 'fs';
 import * as path from 'path';
+
 export const revestimientoPropuestaTemplate = (data: Revestimiento) => {
   let logoBase64 = '';
   try {
