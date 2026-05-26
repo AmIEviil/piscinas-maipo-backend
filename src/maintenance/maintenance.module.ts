@@ -22,5 +22,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
       Revestimiento,
     ]),
   ],
+  exports: [MaintenanceService],
 })
 export class MaintenanceModule {}

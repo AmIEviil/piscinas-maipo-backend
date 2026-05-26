@@ -262,6 +262,90 @@ export class MaintenanceService {
       throw new NotFoundException('maintenance not found');
   }
 
+  async findByDate(date: Date): Promise<Maintenance[]> {
+    const dateStr = date.toISOString().split('T')[0];
+    return this.maintenanceRepository
+      .createQueryBuilder('m')
+      .leftJoinAndSelect('m.client', 'client')
+      .leftJoinAndSelect('m.productos', 'productos')
+      .leftJoinAndSelect('productos.product', 'product')
+      .where('CAST(m.fecha_mantencion AS DATE) = :date', { date: dateStr })
+      .orderBy('client.ruta', 'ASC')
+      .addOrderBy('client.nombre', 'ASC')
+      .getMany();
+  }
+
+  async findByDateRange(start: Date, end: Date): Promise<Maintenance[]> {
+    const startStr = start.toISOString().split('T')[0];
+    const endStr = end.toISOString().split('T')[0];
+    return this.maintenanceRepository
+      .createQueryBuilder('m')
+      .leftJoinAndSelect('m.client', 'client')
+      .leftJoinAndSelect('m.productos', 'productos')
+      .leftJoinAndSelect('productos.product', 'product')
+      .where('CAST(m.fecha_mantencion AS DATE) BETWEEN :start AND :end', {
+        start: startStr,
+        end: endStr,
+      })
+      .orderBy('m.fecha_mantencion', 'ASC')
+      .addOrderBy('client.nombre', 'ASC')
+      .getMany();
+  }
+
+  async findClientsWithPendingPayments(): Promise<
+    {
+      clientId: string;
+      nombre: string;
+      direccion: string;
+      dia_mantencion: string;
+      ruta: string;
+      totalPendiente: number;
+      mantencionesPendientes: number;
+    }[]
+  > {
+    const unpaid = await this.maintenanceRepository
+      .createQueryBuilder('m')
+      .leftJoinAndSelect('m.client', 'client')
+      .where('m.recibio_pago = false')
+      .andWhere('client.isActive = true')
+      .orderBy('client.nombre', 'ASC')
+      .getMany();
+
+    const map = new Map<
+      string,
+      {
+        clientId: string;
+        nombre: string;
+        direccion: string;
+        dia_mantencion: string;
+        ruta: string;
+        totalPendiente: number;
+        mantencionesPendientes: number;
+      }
+    >();
+
+    for (const m of unpaid) {
+      const c = m.client;
+      if (!c) continue;
+      if (!map.has(c.id)) {
+        map.set(c.id, {
+          clientId: c.id,
+          nombre: c.nombre,
+          direccion: c.direccion,
+          dia_mantencion: c.dia_mantencion,
+          ruta: c.ruta ?? '—',
+          totalPendiente: 0,
+          mantencionesPendientes: 0,
+        });
+      }
+      const entry = map.get(c.id)!;
+      entry.totalPendiente += m.valor_mantencion ?? 0;
+      entry.mantencionesPendientes += 1;
+    }
+
+    return Array.from(map.values());
+  }
+
   async findByClientId(id: string) {
     const allMaintenances = await this.maintenanceRepository.find({
       where: { client: { id } },

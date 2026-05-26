@@ -174,6 +174,53 @@ export class ProductsService {
     }
   }
 
+  async getWeeklyProductUsage(
+    start: Date,
+    end: Date,
+  ): Promise<
+    {
+      nombre: string;
+      tipo: string;
+      usadoEnSemana: number;
+      cantDisponible: number;
+      stockMinimo: number | null;
+      recomendarCompra: boolean;
+    }[]
+  > {
+    const startStr = start.toISOString().split('T')[0];
+    const endStr = end.toISOString().split('T')[0];
+
+    const rows = await this.productRepository
+      .createQueryBuilder('p')
+      .innerJoinAndSelect('p.tipo', 'tipo')
+      .leftJoin('p.mantenimientos', 'mp')
+      .leftJoin('mp.maintenance', 'm')
+      .select('p.id', 'id')
+      .addSelect('p.nombre', 'nombre')
+      .addSelect('tipo.nombre', 'tipoNombre')
+      .addSelect('p.cant_disponible', 'cantDisponible')
+      .addSelect('p.stock_minimo', 'stockMinimo')
+      .addSelect(
+        `COALESCE(SUM(CASE WHEN CAST(m.fecha_mantencion AS DATE) BETWEEN :start AND :end THEN mp.cantidad ELSE 0 END), 0)`,
+        'usadoEnSemana',
+      )
+      .setParameters({ start: startStr, end: endStr })
+      .groupBy('p.id')
+      .addGroupBy('tipo.nombre')
+      .orderBy('p.nombre', 'ASC')
+      .getRawMany();
+
+    return rows.map((r) => ({
+      nombre: r.nombre,
+      tipo: r.tipoNombre ?? '—',
+      usadoEnSemana: Number(r.usadoEnSemana),
+      cantDisponible: r.cantDisponible ?? 0,
+      stockMinimo: r.stockMinimo ?? null,
+      recomendarCompra:
+        r.stockMinimo !== null && r.cantDisponible <= r.stockMinimo,
+    }));
+  }
+
   async getLowStockProducts(): Promise<Product[]> {
     return this.productRepository
       .createQueryBuilder('product')

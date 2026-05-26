@@ -47,4 +47,17 @@ export class UsersService {
     user.isActive = false;
     return this.userRepository.save(user);
   }
+
+  async findAdminEmails(): Promise<string[]> {
+    const users = await this.userRepository
+      .createQueryBuilder('user')
+      .innerJoin('user.roleUser', 'roleUser')
+      .innerJoin('roleUser.role', 'role')
+      .where('role.nombre = :roleName', { roleName: 'admin' })
+      .andWhere('user.isActive = :isActive', { isActive: true })
+      .andWhere('user.email IS NOT NULL')
+      .select(['user.email'])
+      .getMany();
+    return users.map((u) => u.email).filter(Boolean);
+  }
 }

@@ -119,4 +119,15 @@ export class PagosService {
     await this.googleDriveService.deleteFile(String(comprobante.fileId));
     await this.comprobantePagoRepository.delete(id);
   }
+
+  async findRecentPayments(): Promise<ComprobantePago[]> {
+    const since = new Date();
+    since.setDate(since.getDate() - 7);
+    const sinceStr = since.toISOString().split('T')[0]; // 'YYYY-MM-DD'
+
+    return this.comprobantePagoRepository
+      .createQueryBuilder('pago')
+      .where('pago.fecha_emision >= :since', { since: sinceStr })
+      .getMany();
+  }
 }

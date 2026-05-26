@@ -14,5 +14,6 @@ import { UploadedFilesModule } from '../uploaded-files/uploaded-files.module';
     GoogleDriveModule,
     UploadedFilesModule,
   ],
+  exports: [PagosService],
 })
 export class PagosModule {}
