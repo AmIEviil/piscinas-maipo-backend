@@ -30,7 +30,7 @@ export class AuthController {
   @Throttle({ default: { ttl: 900_000, limit: 5 } })
   @Post('request-password-reset')
   async requestPasswordReset(@Body() dto: RequestPasswordResetDto) {
-    return this.authService.requestPasswordReset(dto.email);
+    return this.authService.requestPasswordReset(dto.user_name, dto.email);
   }
 
   @Public()
@@ -69,4 +69,5 @@ export class AuthController {
   ) {
     return this.authService.setSessionClosedAt(userId, logout_at);
   }
+
 }

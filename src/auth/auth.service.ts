@@ -3,6 +3,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -14,8 +15,8 @@ import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 // import { LoginUserDto } from './dto/login-user.dto';
 // import { ConfigureAccountDto } from './dto/configure-user.dto';
-// import { MailService } from 'src/email/email.service';
 // import { SetupProfileDto } from './dto/setup-profile.dto';
+import { MailService } from '../mail/mail.service';
 import { User } from '../users/entities/user.entity';
 import { Role } from '../users/entities/role.entity';
 import { RoleUser } from '../users/entities/role-user.entity';
@@ -36,7 +37,7 @@ export class AuthService {
     private readonly roleRepository: Repository<Role>,
 
     private jwtService: JwtService,
-    // private mailService: MailService,
+    private mailService: MailService,
   ) {}
 
   passwordRegex = /(?:(?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*/;
@@ -62,12 +63,12 @@ export class AuthService {
 
     const activationToken = this.getJwtToken({ email: user.email });
 
-    // await this.mailService.sendActivationEmail(
-    //   user.email,
-    //   user.id,
-    //   user.nombre,
-    //   user.language as 'es' | 'en',
-    // );
+    void this.mailService.sendAccountActivation({
+      first_name: user.first_name,
+      last_name: user.last_name,
+      email: user.email,
+      activationToken,
+    });
 
     return {
       message: 'Usuario creado. Debe activar su cuenta.',
@@ -279,37 +280,50 @@ export class AuthService {
     };
   }
 
-  async requestPasswordReset(email: string) {
-    const user = await this.userRepository.findOneBy({ email });
+  async requestPasswordReset(user_name: string, email: string) {
+    const user = await this.userRepository.findOne({
+      where: { user_name },
+      select: {
+        id: true,
+        first_name: true,
+        email: true,
+        user_name: true,
+        blocked_until: true,
+      },
+    });
 
-    if (!user) {
-      throw new NotFoundException('error_mail');
+    if (!user || user.email !== email) {
+      throw new NotFoundException('user_or_email_not_found');
     }
 
-    if (user.blocked_until) {
-      return { message: 'user_blocked' };
+    if (user.blocked_until && user.blocked_until > new Date()) {
+      throw new ForbiddenException('user_blocked');
     }
 
-    // const token = this.jwtService.sign(
-    //   { email: user.email },
-    //   { expiresIn: '15m' },
-    // );
+    const token = this.jwtService.sign(
+      { email: user.email, purpose: 'pwd_reset' },
+      { expiresIn: '15m' },
+    );
 
-    // await this.mailService.sendResetPasswordEmail(
-    //   user.email,
-    //   token,
-    //   user.nombre,
-    // );
+    void this.mailService.sendPasswordReset({
+      first_name: user.first_name,
+      email: user.email,
+      resetToken: token,
+    });
 
     return { message: 'email_sended' };
   }
 
   async resetPassword(token: string, newPassword: string) {
-    let payload: { email: string };
+    let payload: { email: string; purpose?: string };
 
     try {
       payload = this.jwtService.verify(token);
     } catch {
+      throw new UnauthorizedException('Token inválido o expirado');
+    }
+
+    if (payload.purpose !== 'pwd_reset') {
       throw new UnauthorizedException('Token inválido o expirado');
     }
 
@@ -319,17 +333,26 @@ export class AuthService {
     user.password = bcrypt.hashSync(newPassword, 10);
     user.failed_attempts = 0;
     user.blocked_until = null;
+
+    const accessToken = this.jwtService.sign(
+      { email: user.email, id: user.id },
+      { expiresIn: '12h' },
+    );
+    const refreshToken = this.jwtService.sign(
+      { email: user.email, id: user.id },
+      { expiresIn: '7d' },
+    );
+    user.refresh_token = bcrypt.hashSync(refreshToken, 10);
+
     await this.userRepository.save(user);
 
-    const sessionToken = this.jwtService.sign({
-      id: user.id,
-      email: user.email,
-    });
+    const { password: _pwd, ...userWithoutPassword } = user;
 
     return {
       message: 'Contraseña actualizada exitosamente',
-      token: sessionToken,
-      user: user,
+      token: accessToken,
+      refreshToken,
+      user: userWithoutPassword,
     };
   }
 
@@ -372,4 +395,5 @@ export class AuthService {
     const token = this.jwtService.sign(payload);
     return token;
   }
+
 }
