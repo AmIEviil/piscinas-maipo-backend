@@ -1,0 +1,29 @@
+<h2>⚠ Alerta de Stock Bajo</h2>
+<p><strong>Fecha:</strong> {{fecha}}</p>
+
+<div class="alert-box">
+  Los siguientes <strong>{{total}}</strong> producto(s) están por debajo de su stock mínimo y requieren atención.
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Producto</th>
+      <th>Tipo</th>
+      <th>Disponible</th>
+      <th>Mínimo</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{#each products}}
+    <tr>
+      <td><strong>{{this.nombre}}</strong></td>
+      <td>{{this.tipo}}</td>
+      <td><span class="badge-warn">{{this.cant_disponible}}</span></td>
+      <td>{{this.stock_minimo}}</td>
+    </tr>
+    {{/each}}
+  </tbody>
+</table>
+
+<p style="margin-top:24px;">Por favor revisa el inventario y realiza los pedidos necesarios a la brevedad.</p>

@@ -1,0 +1,41 @@
+<h2>💳 Cuentas Pendientes de Pago</h2>
+<p><strong>Fecha:</strong> {{fecha}}</p>
+
+{{#if hayPendientes}}
+<div class="alert-box">
+  Hay <strong>{{totalClientes}}</strong> cliente(s) con cuentas pendientes.<br />
+  Monto total adeudado: <strong>${{totalGeneral}}</strong>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Cliente</th>
+      <th>Dirección</th>
+      <th>Día mantención</th>
+      <th>Ruta</th>
+      <th>Mant. pendientes</th>
+      <th>Total adeudado</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{#each clientes}}
+    <tr>
+      <td><strong>{{nombre}}</strong></td>
+      <td>{{direccion}}</td>
+      <td>{{dia_mantencion}}</td>
+      <td>{{ruta}}</td>
+      <td style="text-align:center;"><span class="badge-warn">{{mantencionesPendientes}}</span></td>
+      <td><strong>${{totalPendiente}}</strong></td>
+    </tr>
+    {{/each}}
+  </tbody>
+</table>
+{{else}}
+<div class="success-box">
+  <strong>✅ Estamos al día con las cuentas</strong><br />
+  No hay clientes con mantenciones pendientes de pago.
+</div>
+{{/if}}
+
+<p style="margin-top:24px; color:#707070; font-size:12px;">Este resumen se genera automáticamente todos los días a las 8:00 AM.</p>

@@ -1,0 +1,53 @@
+<h2>📋 Resumen de Mantenciones del Día</h2>
+<p><strong>Fecha:</strong> {{fecha}}</p>
+
+{{#if hayMantenciones}}
+<div class="info-box">
+  Total: <strong>{{total}}</strong> mantenciones —
+  <span class="badge-ok">✔ Realizadas: {{realizadas}}</span>&nbsp;
+  <span class="badge-danger">✘ No realizadas: {{noRealizadas}}</span>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Cliente</th>
+      <th>Dirección</th>
+      <th>Ruta</th>
+      <th>Realizada</th>
+      <th>Valor</th>
+      <th>Productos utilizados</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{#each clientes}}
+    <tr>
+      <td><strong>{{nombre}}</strong></td>
+      <td>{{direccion}}</td>
+      <td>{{ruta}}</td>
+      <td>
+        {{#if realizada}}
+          <span class="badge-ok">✔ Sí</span>
+        {{else}}
+          <span class="badge-danger">✘ No</span>
+        {{/if}}
+      </td>
+      <td>${{valor}}</td>
+      <td>
+        {{#if tieneProductos}}
+          {{#each productos}}{{nombre}} (×{{cantidad}}){{#unless @last}}, {{/unless}}{{/each}}
+        {{else}}
+          <span style="color:#b7b7b7;">Sin productos</span>
+        {{/if}}
+      </td>
+    </tr>
+    {{/each}}
+  </tbody>
+</table>
+{{else}}
+<div class="success-box">
+  No se registraron mantenciones para el día de hoy.
+</div>
+{{/if}}
+
+<p style="margin-top:24px; color:#707070; font-size:12px;">Este resumen se genera automáticamente de lunes a viernes a las 11:00 PM.</p>

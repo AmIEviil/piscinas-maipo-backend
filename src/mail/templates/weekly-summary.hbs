@@ -1,0 +1,27 @@
+<h2>📊 Resumen Semanal</h2>
+<p>Semana del: <strong>{{semana}}</strong></p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Indicador</th>
+      <th>Valor</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Productos bajo stock mínimo</td>
+      <td><span class="badge-warn">{{lowStockCount}}</span></td>
+    </tr>
+    <tr>
+      <td>Comprobantes de pago registrados (7 días)</td>
+      <td>{{recentPaymentsCount}}</td>
+    </tr>
+    <tr>
+      <td>Monto total pagos semana</td>
+      <td><strong>${{recentPaymentsTotalFormatted}}</strong></td>
+    </tr>
+  </tbody>
+</table>
+
+<p style="margin-top:24px; color:#707070; font-size:12px;">Este resumen se genera automáticamente cada lunes a las 8:00 AM.</p>

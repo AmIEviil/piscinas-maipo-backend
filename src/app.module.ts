@@ -25,6 +25,7 @@ import { UploadedFilesModule } from './uploaded-files/uploaded-files.module';
 import { PagosModule } from './pagos/pagos.module';
 import { EmpleadosModule } from './empleados/empleados.module';
 import { VehiclesModule } from './vehicles/vehicles.module';
+import { MailModule } from './mail/mail.module';
 import { GlobalJwtAuthGuard } from './auth/guards/global-jwt-auth.guard';
 
 @Module({
@@ -74,6 +75,7 @@ import { GlobalJwtAuthGuard } from './auth/guards/global-jwt-auth.guard';
     PagosModule,
     EmpleadosModule,
     VehiclesModule,
+    MailModule,
   ],
   controllers: [AppController, ObservacionesController],
   providers: [

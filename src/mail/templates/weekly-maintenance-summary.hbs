@@ -1,0 +1,114 @@
+<h2>📊 Resumen Semanal de Mantenciones</h2>
+<p><strong>Semana:</strong> {{semanaInicio}} al {{semanaFin}}</p>
+
+<div class="info-box">
+  Total: <strong>{{totalMantenciones}}</strong> mantenciones —
+  <span class="badge-ok">✔ Realizadas: {{realizadas}}</span>&nbsp;
+  <span class="badge-danger">✘ No realizadas: {{noRealizadas}}</span>
+</div>
+
+<h3>Mantenciones de la semana</h3>
+{{#if mantenciones}}
+<table>
+  <thead>
+    <tr>
+      <th>Fecha</th>
+      <th>Cliente</th>
+      <th>Ruta</th>
+      <th>Realizada</th>
+      <th>Valor</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{#each mantenciones}}
+    <tr>
+      <td>{{fecha}}</td>
+      <td><strong>{{cliente}}</strong></td>
+      <td>{{ruta}}</td>
+      <td>
+        {{#if realizada}}
+          <span class="badge-ok">✔ Sí</span>
+        {{else}}
+          <span class="badge-danger">✘ No</span>
+        {{/if}}
+      </td>
+      <td>${{valor}}</td>
+    </tr>
+    {{/each}}
+  </tbody>
+</table>
+{{else}}
+<p style="color:#707070;">No se registraron mantenciones esta semana.</p>
+{{/if}}
+
+<hr class="divider" />
+
+<h3>🧴 Inventario de Productos</h3>
+{{#if productos}}
+<table>
+  <thead>
+    <tr>
+      <th>Producto</th>
+      <th>Tipo</th>
+      <th>Usado esta semana</th>
+      <th>Stock disponible</th>
+      <th>Estado</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{#each productos}}
+    <tr>
+      <td><strong>{{nombre}}</strong></td>
+      <td>{{tipo}}</td>
+      <td style="text-align:center;">{{usadoEnSemana}}</td>
+      <td style="text-align:center;">{{cantDisponible}}</td>
+      <td>
+        {{#if recomendarCompra}}
+          <span class="badge-warn">⚠ Comprar</span>
+        {{else}}
+          <span class="badge-ok">OK</span>
+        {{/if}}
+      </td>
+    </tr>
+    {{/each}}
+  </tbody>
+</table>
+{{#if hayProductosAComprar}}
+<div class="alert-box" style="margin-top:16px;">
+  <strong>⚠ Se recomienda reponer:</strong>
+  {{#each productosAComprar}}{{nombre}}{{#unless @last}}, {{/unless}}{{/each}}
+</div>
+{{/if}}
+{{else}}
+<p style="color:#707070;">Sin datos de productos.</p>
+{{/if}}
+
+<hr class="divider" />
+
+<h3>📅 Trabajos de la Próxima Semana</h3>
+{{#if hayProximaSemana}}
+<table>
+  <thead>
+    <tr>
+      <th>Fecha</th>
+      <th>Cliente</th>
+      <th>Dirección</th>
+      <th>Ruta</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{#each proximaSemana}}
+    <tr>
+      <td>{{fecha}}</td>
+      <td><strong>{{cliente}}</strong></td>
+      <td>{{direccion}}</td>
+      <td>{{ruta}}</td>
+    </tr>
+    {{/each}}
+  </tbody>
+</table>
+{{else}}
+<p style="color:#707070;">No hay mantenciones programadas para la próxima semana.</p>
+{{/if}}
+
+<p style="margin-top:24px; color:#707070; font-size:12px;">Este resumen se genera automáticamente todos los domingos a las 9:00 PM.</p>

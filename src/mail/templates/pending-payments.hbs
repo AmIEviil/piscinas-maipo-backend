@@ -1,0 +1,33 @@
+<h2>💳 Pagos Recientes</h2>
+<p><strong>Fecha:</strong> {{fecha}}</p>
+
+{{#if pagos.length}}
+<div class="info-box">
+  Se registraron <strong>{{total}}</strong> comprobante(s) de pago en los últimos 7 días.
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Nombre</th>
+      <th>Tipo</th>
+      <th>Monto</th>
+      <th>Fecha emisión</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{#each pagos}}
+    <tr>
+      <td><strong>{{this.nombre}}</strong></td>
+      <td>{{this.tipo}}</td>
+      <td>${{this.monto}}</td>
+      <td>{{this.fecha_emision}}</td>
+    </tr>
+    {{/each}}
+  </tbody>
+</table>
+{{else}}
+<div class="success-box">
+  No se registraron pagos esta semana.
+</div>
+{{/if}}
