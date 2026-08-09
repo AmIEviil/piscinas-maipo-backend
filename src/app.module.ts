@@ -30,6 +30,7 @@ import { GlobalJwtAuthGuard } from './auth/guards/global-jwt-auth.guard';
 import { RolesGuard } from './auth/guards/roles.guard';
 import { RoleUser } from './users/entities/role-user.entity';
 import { AuditModule } from './audit/audit.module';
+import { ArcopModule } from './arcop/arcop.module';
 
 @Module({
   imports: [
@@ -74,6 +75,7 @@ import { AuditModule } from './audit/audit.module';
     }),
     TypeOrmModule.forFeature([RoleUser]), // para RolesGuard
     AuditModule,
+    ArcopModule,
     UsersModule,
     ClientsModule,
     MaintenanceModule,

@@ -16,6 +16,7 @@ import { RevestimientoImagen } from './revestimientos/entities/revestimiento-ima
 import { UploadedFiles } from './uploaded-files/entities/uploaded-files.entity';
 import { ComprobantePago } from './pagos/entities/comprobante-pago.entity';
 import { AccessAudit } from './audit/entities/access-audit.entity';
+import { DeletionLog } from './arcop/entities/deletion-log.entity';
 
 dotenv.config();
 
@@ -47,6 +48,7 @@ export const AppDataSource = new DataSource({
     UploadedFiles,
     ComprobantePago,
     AccessAudit,
+    DeletionLog,
   ],
   migrations: [__dirname + '/migrations/*{.ts,.js}'],
 });
