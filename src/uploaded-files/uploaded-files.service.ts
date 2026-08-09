@@ -48,9 +48,9 @@ export class UploadedFilesService {
       where: { parentId },
     });
 
+    // No registrar `results`: incluye nombres de archivo y URL de Drive.
     this.logger.log(
       `Encontrados ${results.length} archivos para Parent ID: ${parentId}`,
-      results,
     );
 
     const files: UploadedFiles[] = [];

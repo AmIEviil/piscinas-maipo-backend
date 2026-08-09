@@ -47,7 +47,7 @@ export class RepairsService {
   }
 
   async createRepair(data: CreateRepairDto): Promise<Repair> {
-    console.log('Creating repair with data:', data);
+    // No registrar el DTO: incluye datos identificables del cliente.
     const newRepair = this.repairsRepository.create({
       ...data,
       client: { id: data.client_id },

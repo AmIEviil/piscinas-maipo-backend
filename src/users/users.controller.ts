@@ -11,9 +11,15 @@ import {
 import { UsersService } from './users.service';
 import { User } from './entities/user.entity';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { ROLES } from '../auth/constants/roles';
+import { Audit } from '../audit/audit.decorator';
+import { CreateUserAdminDto, UpdateUserAdminDto } from './dto/manage-user.dto';
 
 @Controller('users')
 @UseGuards(JwtAuthGuard)
+@Roles(ROLES.SUPER_ADMIN, ROLES.ADMIN)
+@Audit('User')
 export class UsersController {
   constructor(private readonly userService: UsersService) {}
 
@@ -28,12 +34,15 @@ export class UsersController {
   }
 
   @Post()
-  create(@Body() user: Partial<User>): Promise<User> {
+  create(@Body() user: CreateUserAdminDto): Promise<User> {
     return this.userService.createUser(user);
   }
 
   @Put(':id')
-  update(@Param('id') id: string, @Body() user: Partial<User>): Promise<User> {
+  update(
+    @Param('id') id: string,
+    @Body() user: UpdateUserAdminDto,
+  ): Promise<User> {
     return this.userService.update(id, user);
   }
 

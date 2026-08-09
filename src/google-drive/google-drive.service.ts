@@ -5,6 +5,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { google } from 'googleapis';
+import type { Readable } from 'node:stream';
 import * as streamifier from 'streamifier';
 import { Repository } from 'typeorm';
 import { UploadedFiles } from '../uploaded-files/entities/uploaded-files.entity';
@@ -91,7 +92,7 @@ export class GoogleDriveService {
   // Leer Archivo (Streaming)
   async getFileStream(
     fileId: string,
-  ): Promise<{ stream: any; mimeType: string; name: string }> {
+  ): Promise<{ stream: Readable; mimeType: string; name: string }> {
     try {
       // A. Obtener metadatos (nombre y tipo)
       const metadata = await this.driveClient.files.get({
@@ -106,9 +107,10 @@ export class GoogleDriveService {
       );
 
       return {
-        stream: response.data,
-        mimeType: metadata.data.mimeType,
-        name: metadata.data.name,
+        stream: response.data as Readable,
+        mimeType: (metadata.data.mimeType ??
+          'application/octet-stream') as string,
+        name: (metadata.data.name ?? 'archivo') as string,
       };
     } catch (error) {
       console.error(`Error obteniendo archivo ${fileId}:`, error);

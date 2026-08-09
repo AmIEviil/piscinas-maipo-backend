@@ -13,8 +13,13 @@ import { PagosService } from './pagos.service';
 import { CreateComprobantePagoDto } from './dto/comprobante-pago.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { FileValidationPipe } from '../utils/file-validation.pipe';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { ROLES } from '../auth/constants/roles';
+import { Audit } from '../audit/audit.decorator';
 
 @Controller('pagos')
+@Roles(ROLES.SUPER_ADMIN, ROLES.ADMIN)
+@Audit('ComprobantePago')
 export class PagosController {
   private readonly logger = new Logger(PagosController.name);
   constructor(private readonly pagosService: PagosService) {}
@@ -40,7 +45,8 @@ export class PagosController {
     @UploadedFile(new FileValidationPipe('document'))
     file?: Express.Multer.File,
   ) {
-    this.logger.log('Creando un nuevo comprobante de pago', { dto });
+    // No registrar el DTO: incluye el nombre del titular del comprobante.
+    this.logger.log('Creando un nuevo comprobante de pago');
     return await this.pagosService.createComprobantePago(dto, file);
   }
 

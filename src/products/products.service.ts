@@ -22,7 +22,7 @@ export class ProductsService {
   }
 
   async findByFilters(filters: FilterProductDto): Promise<Product[]> {
-    console.log('Filters received:', filters);
+
     const query = this.productRepository
       .createQueryBuilder('product')
       .innerJoinAndSelect('product.tipo', 'tipo')
@@ -55,7 +55,7 @@ export class ProductsService {
     >();
 
     for (const product of products) {
-      console.log('Processing product:', product);
+
       const nombre = product.nombre ?? 'Sin tipo';
 
       const disponibles = product.cant_disponible ?? 0;

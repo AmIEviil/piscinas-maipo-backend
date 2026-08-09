@@ -15,6 +15,7 @@ import { RoleUser } from './users/entities/role-user.entity';
 import { RevestimientoImagen } from './revestimientos/entities/revestimiento-imagen.entity';
 import { UploadedFiles } from './uploaded-files/entities/uploaded-files.entity';
 import { ComprobantePago } from './pagos/entities/comprobante-pago.entity';
+import { AccessAudit } from './audit/entities/access-audit.entity';
 
 dotenv.config();
 
@@ -25,6 +26,10 @@ export const AppDataSource = new DataSource({
   username: process.env.DB_USERNAME,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
+  ssl:
+    process.env.DB_SSL === 'true'
+      ? { rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED !== 'false' }
+      : false,
   entities: [
     Product,
     Client,
@@ -41,6 +46,7 @@ export const AppDataSource = new DataSource({
     RevestimientoImagen,
     UploadedFiles,
     ComprobantePago,
+    AccessAudit,
   ],
   migrations: [__dirname + '/migrations/*{.ts,.js}'],
 });

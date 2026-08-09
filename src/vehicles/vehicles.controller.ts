@@ -12,8 +12,11 @@ import { VehiclesService } from './vehicles.service';
 import { Vehicle } from './entities/vehicle.entity';
 import { FilterVehiclesDto } from './dto/filterVehicles.dto';
 import { UploadedFiles } from '../uploaded-files/entities/uploaded-files.entity';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { ROLES, ROLE_GROUPS } from '../auth/constants/roles';
 
 @Controller('vehicles')
+@Roles(...ROLE_GROUPS.MANAGEMENT)
 export class VehiclesController {
   private readonly logger = new Logger(VehiclesController.name);
 
@@ -34,12 +37,14 @@ export class VehiclesController {
     return this.vehiclesService.findOne(placa);
   }
 
+  @Roles(ROLES.SUPER_ADMIN, ROLES.ADMIN)
   @Post()
   create(@Body() vehicleData: Partial<Vehicle>): Promise<Vehicle> {
     this.logger.log('Creando nuevo vehículo');
     return this.vehiclesService.create(vehicleData);
   }
 
+  @Roles(ROLES.SUPER_ADMIN, ROLES.ADMIN)
   @Post(':placa')
   update(
     @Param('placa') placa: string,
@@ -49,6 +54,7 @@ export class VehiclesController {
     return this.vehiclesService.update(placa, vehicleData);
   }
 
+  @Roles(ROLES.SUPER_ADMIN, ROLES.ADMIN)
   @Delete(':placa')
   remove(@Param('placa') placa: string): Promise<void> {
     this.logger.log(`Eliminando vehículo con placa: ${placa}`);

@@ -10,9 +10,15 @@ import {
 } from '@nestjs/common';
 import { EmpleadosService } from './empleados.service';
 import { FiltersEmployeesDto } from './dto/FiltersEmployees.dto';
+import { CreateEmployeeDto, UpdateEmployeeDto } from './dto/empleado.dto';
 import { Employee } from './entities/empleado.entity';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { ROLES } from '../auth/constants/roles';
+import { Audit } from '../audit/audit.decorator';
 
 @Controller('empleados')
+@Roles(ROLES.SUPER_ADMIN, ROLES.ADMIN)
+@Audit('Employee')
 export class EmpleadosController {
   private readonly logger = new Logger(EmpleadosController.name);
 
@@ -30,12 +36,12 @@ export class EmpleadosController {
   }
 
   @Post()
-  create(@Body() empleadoData: Partial<Employee>): Promise<Employee> {
+  create(@Body() empleadoData: CreateEmployeeDto): Promise<Employee> {
     return this.empleadosService.createEmployee(empleadoData);
   }
 
   @Post(':id')
-  update(@Param('id') id: string, @Body() empleadoData: Employee) {
+  update(@Param('id') id: string, @Body() empleadoData: UpdateEmployeeDto) {
     this.logger.log(`Actualizando empleado con id: ${id}`);
     return this.empleadosService.update(id, empleadoData);
   }

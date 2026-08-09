@@ -1,8 +1,15 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Client } from './entities/clients.entity';
-import { FilterClientsDto } from './dto/FilterClients.dto';
+import {
+  CLIENT_ORDER_BY_FIELDS,
+  FilterClientsDto,
+} from './dto/FilterClients.dto';
 import { CreateClientDto } from './dto/CreateClient.dto';
 import { ObservacionesService } from '../observaciones/observaciones.service';
 import { getValorCampoTipoExtendido } from '../utils/extendedLabel.utils';
@@ -86,11 +93,14 @@ export class ClientsService {
     return this.clientRepository.save(updatedClient);
   }
 
-  async updateCampo(user_id: string, dto: UpdateCampoDto[]) {
+  // `clientId` antes se llamaba `user_id`, pero siempre fue el id del cliente:
+  // el nombre confundia el registro de observaciones, que lo guardaba como si
+  // fuera el autor del cambio.
+  async updateCampo(clientId: string, dto: UpdateCampoDto[], userId: string) {
     let camposActualizados = 0;
     for (const campoDto of dto) {
       const existing = await this.clientRepository.findOneBy({
-        id: user_id,
+        id: clientId,
       });
       if (!existing) throw new NotFoundException('Client not found');
       const updatedClient = this.clientRepository.merge(existing, {
@@ -99,9 +109,11 @@ export class ClientsService {
       if (campoDto.campo === 'observacion') {
         await this.observacionesService.createObservacion({
           tipoEntidad: this.tipoEntidad,
-          registro_id: user_id,
+          registro_id: clientId,
           detalle: String(campoDto.valor),
           fecha: new Date(),
+          // Faltaba el autor: la observacion quedaba sin saber quien la creo.
+          usuarioId: userId,
         });
       }
       await this.clientRepository.save(updatedClient);
@@ -154,8 +166,15 @@ export class ClientsService {
       });
     }
 
+    // Segunda barrera contra inyeccion SQL: aunque el ValidationPipe ya valida
+    // FilterClientsDto, el service no confia en su entrada. orderBy se
+    // interpola en la consulta y nunca debe llegar sin verificar.
     if (filters.orderBy) {
-      query.orderBy(`client.${filters.orderBy}`, filters.orderDirection);
+      if (!CLIENT_ORDER_BY_FIELDS.includes(filters.orderBy)) {
+        throw new BadRequestException(`orderBy no permitido`);
+      }
+      const direction = filters.orderDirection === 'DESC' ? 'DESC' : 'ASC';
+      query.orderBy(`client.${filters.orderBy}`, direction);
     }
 
     const clients = await query.getMany();

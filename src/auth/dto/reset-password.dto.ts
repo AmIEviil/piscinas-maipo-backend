@@ -1,4 +1,10 @@
 import { IsString, Matches, MaxLength, MinLength } from 'class-validator';
+import {
+  PASSWORD_MAX_LENGTH,
+  PASSWORD_MESSAGE,
+  PASSWORD_MIN_LENGTH,
+  PASSWORD_REGEX,
+} from '../constants/password-policy';
 
 export class ResetPasswordDto {
   @IsString()
@@ -6,11 +12,8 @@ export class ResetPasswordDto {
   token: string;
 
   @IsString()
-  @MinLength(8)
-  @MaxLength(50)
-  @Matches(/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, {
-    message:
-      'La contraseña debe tener una mayúscula, una minúscula y un número',
-  })
+  @MinLength(PASSWORD_MIN_LENGTH)
+  @MaxLength(PASSWORD_MAX_LENGTH)
+  @Matches(PASSWORD_REGEX, { message: PASSWORD_MESSAGE })
   newPassword: string;
 }

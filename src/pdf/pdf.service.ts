@@ -31,7 +31,7 @@ export class PdfService {
   ): Promise<Buffer | string> {
     const revestimiento =
       await this.revestimientoService.findOne(revestimientoId);
-    console.log(revestimiento);
+    // No registrar el objeto: contiene nombre, direccion y contacto del cliente.
     const html = revestimientoPropuestaTemplate(revestimiento);
     if (onlyHtml) {
       return html;

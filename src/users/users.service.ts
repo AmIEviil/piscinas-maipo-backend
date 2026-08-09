@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
+import { CreateUserAdminDto, UpdateUserAdminDto } from './dto/manage-user.dto';
 
 @Injectable()
 export class UsersService {
@@ -22,16 +23,18 @@ export class UsersService {
     return user;
   }
 
-  async createUser(user: Partial<User>): Promise<User> {
+  // Los DTOs no incluyen campos de credenciales ni de estado de bloqueo, de
+  // modo que no hay forma de escribirlos por esta via.
+  async createUser(user: CreateUserAdminDto): Promise<User> {
     const newUser = this.userRepository.create(user);
     return this.userRepository.save(newUser);
   }
 
-  async update(id: string, User: Partial<User>): Promise<User> {
+  async update(id: string, dto: UpdateUserAdminDto): Promise<User> {
     const existing = await this.userRepository.findOneBy({ id });
-    if (!existing) throw new NotFoundException('Task not found');
+    if (!existing) throw new NotFoundException('User not found');
 
-    const updatedUser = this.userRepository.merge(existing, User);
+    const updatedUser = this.userRepository.merge(existing, dto);
     return this.userRepository.save(updatedUser);
   }
 

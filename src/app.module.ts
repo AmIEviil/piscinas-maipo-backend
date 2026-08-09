@@ -27,6 +27,9 @@ import { EmpleadosModule } from './empleados/empleados.module';
 import { VehiclesModule } from './vehicles/vehicles.module';
 import { MailModule } from './mail/mail.module';
 import { GlobalJwtAuthGuard } from './auth/guards/global-jwt-auth.guard';
+import { RolesGuard } from './auth/guards/roles.guard';
+import { RoleUser } from './users/entities/role-user.entity';
+import { AuditModule } from './audit/audit.module';
 
 @Module({
   imports: [
@@ -48,14 +51,29 @@ import { GlobalJwtAuthGuard } from './auth/guards/global-jwt-auth.guard';
       password: process.env.DB_PASSWORD,
       database: process.env.DB_NAME,
       autoLoadEntities: true,
-      synchronize: process.env.NODE_ENV !== 'production', // Solo en desarrollo
+      // ponytail: fail-closed. Opt in with DB_SYNCHRONIZE=true in dev .env only. NEVER in prod (use migrations).
+      synchronize: process.env.DB_SYNCHRONIZE === 'true',
       // migrationsRun: true,
+      // TLS hacia la base de datos. Se activa con DB_SSL=true. Si la base no
+      // esta en el mismo host que la aplicacion, la conexion lleva datos
+      // personales por la red y debe ir cifrada.
+      // DB_SSL_REJECT_UNAUTHORIZED=false solo para proveedores con certificado
+      // autofirmado; deja el canal cifrado pero sin validar la contraparte.
+      ssl:
+        process.env.DB_SSL === 'true'
+          ? {
+              rejectUnauthorized:
+                process.env.DB_SSL_REJECT_UNAUTHORIZED !== 'false',
+            }
+          : false,
       extra: {
         max: 10,
         idleTimeoutMillis: 30000,
       },
       migrations: [__dirname + '/migrations/*{.ts,.js}'],
     }),
+    TypeOrmModule.forFeature([RoleUser]), // para RolesGuard
+    AuditModule,
     UsersModule,
     ClientsModule,
     MaintenanceModule,
@@ -82,6 +100,7 @@ import { GlobalJwtAuthGuard } from './auth/guards/global-jwt-auth.guard';
     AppService,
     { provide: APP_GUARD, useClass: GlobalJwtAuthGuard },
     { provide: APP_GUARD, useClass: ThrottlerGuard },
+    { provide: APP_GUARD, useClass: RolesGuard },
   ],
 })
 export class AppModule {}
