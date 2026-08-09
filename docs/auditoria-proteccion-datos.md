@@ -21,7 +21,7 @@ Se hizo un trabajo previo de endurecimiento visible en el código (helmet, throt
 | Medio | 10 | Parcial |
 | Cumplimiento normativo | 8 | Sí |
 
-**Estado:** las Fases 0, 1 y 2 del plan están implementadas. Ver sección 4.
+**Estado:** las cuatro fases del plan están implementadas en lo que depende del código. Ver sección 4.
 
 La documentación normativa de la Fase 2 está en [`docs/proteccion-datos/`](proteccion-datos/README.md). **Todos esos documentos contienen marcadores entre corchetes** (razón social, RUT, domicilio, plazos) que deben completarse antes de publicarlos: no se rellenaron con valores inventados porque una política de privacidad con datos societarios incorrectos es en sí misma un incumplimiento.
 
@@ -246,6 +246,20 @@ Corregido en ambos: se eliminan `password` y `refresh_token` de la respuesta y s
 
 **M-9 — JWT sin `issuer`/`audience`, sin rotación de refresh token.** El refresh token no se rota al usarse (`AuthService.refreshToken` solo emite un nuevo access token), por lo que un refresh robado sirve los 7 días completos sin posibilidad de detectar el uso duplicado.
 
+**M-12 — El despliegue no ejecuta las migraciones y no valida nada antes de publicar.** *(detectado al implementar la Fase 3)*
+
+`.github/workflows/deploy.yml` hace `git reset --hard origin/main`, reconstruye el contenedor y lo levanta. **No ejecuta migraciones en ningún momento**, y `start:prod` en `package.json` es `node dist/main`, no "migraciones y luego arranque" como afirma el `CLAUDE.md` del proyecto. Con `synchronize` ya en fail-closed (correcto), el esquema no se actualiza solo: cualquier tabla nueva simplemente no existe en producción.
+
+Efecto concreto sobre esta rama: sin `yarn migration:run`, los registros de `access_audit` fallan (queda en el log del servidor, no interrumpe la petición) y las supresiones ARCOP fallan por completo.
+
+Además el repositorio del backend **solo tenía `deploy.yml`**: se desplegaba a producción sin lint, sin compilación y sin tests previos. El frontend sí tenía `ci-check.yml`.
+
+Corregido en parte: se añadió `ci-check.yml` al backend, con lint, build, tests y auditoría de dependencias. **No se modificó `deploy.yml`**: ejecutar migraciones automáticamente en cada despliegue es una decisión de operación con riesgo propio (una migración destructiva se aplicaría sola) y corresponde al equipo tomarla. Mientras tanto, `yarn migration:run` es un paso manual obligatorio del despliegue.
+
+Corregir también la línea de `CLAUDE.md` que describe `start:prod`.
+
+---
+
 **M-11 — El esquema de la base de datos no es reproducible desde las migraciones.** *(detectado al implementar la Fase 1)* Las migraciones existentes en `src/migrations/` solo insertan datos semilla (roles, usuarios, columnas sueltas): las tablas se crearon con `synchronize`. No hay forma de reconstruir la base desde cero de manera controlada, lo que afecta a la disponibilidad e integridad de los datos personales ante un incidente y complica cualquier restauración. La migración nueva `CreateAccessAudit` sí crea su tabla, e incluye `CREATE EXTENSION IF NOT EXISTS "uuid-ossp"` porque ninguna migración previa la declara.
 
 **M-10 — Cabecera incorrecta en el cliente HTTP.** `src/core/client/client.ts:11` envía `"Access-Control-Allow-Origin": "*"` como cabecera **de solicitud**. No tiene efecto de seguridad y fuerza un preflight en cada petición.
@@ -439,14 +453,27 @@ La **rectificación** no necesitó endpoints nuevos: se hace por los de actualiz
 | Purga automática por vencimiento de plazos | **No debe implementarse antes de fijar los plazos.** Una purga con un plazo equivocado destruye datos que había obligación de conservar, y es irreversible. El diseño está descrito en `politica-retencion.md`. |
 | Suscribir los DPA y verificar el alcance OAuth de Google Drive | Acciones contractuales y de configuración en los proveedores, fuera del código. Checklist en `encargados-y-transferencias.md`. |
 
-### Fase 3 — Gobernanza y verificación continua (desde la semana 8)
+### Fase 3 — Gobernanza y verificación continua
 
-- Designar un responsable de protección de datos interno (no obligatorio por tamaño, pero necesario como punto de contacto ante la Agencia).
-- Evaluar la adopción de un **modelo de prevención de infracciones** (art. 49): es voluntario y constituye atenuante frente a sanciones.
-- Capacitación al personal con acceso a datos de clientes y trabajadores; acuerdos de confidencialidad.
-- Revisión trimestral de la matriz de roles y de las cuentas activas; baja inmediata de cuentas de personal desvinculado.
-- Pruebas de seguridad antes de cada release relevante; `yarn audit` en CI; revisión anual del registro de actividades.
-- Respaldos cifrados con prueba de restauración documentada.
+**Implementado.** El documento [`gobernanza.md`](proteccion-datos/gobernanza.md) recoge roles y responsabilidades, el calendario de revisiones (trimestral, semestral, anual y al alta y baja de personal), el checklist de cambios al sistema, el estado del modelo de prevención del art. 49 y los indicadores a seguir.
+
+Los controles que se podían automatizar, se automatizaron: un checklist que depende de que alguien se acuerde de leerlo no es un control.
+
+| Acción | Archivos |
+|---|---|
+| Test que recorre el código y falla si aparece un controlador sin `@Roles` ni `@Public`, uno con datos personales sin `@Audit`, o cualquiera que conceda acceso al rol `Cliente` | `src/audit/cobertura-controladores.spec.ts` |
+| CI en el backend con lint, build, tests y auditoría de dependencias. **El repositorio solo tenía `deploy.yml`: se desplegaba a producción sin ninguna validación previa** | `.github/workflows/ci-check.yml` |
+| Plantilla de pull request con el checklist de protección de datos, en ambos repositorios | `.github/pull_request_template.md` |
+
+**Pendiente, requiere decisión o datos de la empresa:**
+
+| Punto | Motivo |
+|---|---|
+| Designar el punto de contacto y publicarlo | La ley no obliga a un delegado en una empresa de este tamaño, pero sin un destinatario único las solicitudes se pierden |
+| Completar los tres elementos abiertos del modelo de prevención (art. 49) | Conviene hacerlo **después** de cerrar las acciones técnicas y contractuales: un modelo que documenta controles inexistentes acredita que se conocía el riesgo |
+| Acuerdo de confidencialidad para el personal con acceso | Documento laboral; debe redactarlo asesoría legal |
+| Arrancar el calendario de revisiones | Requiere asignar nombres y horas |
+| Prueba de restauración de respaldos y test de penetración | Requieren entorno y autorización |
 
 ---
 
@@ -463,7 +490,8 @@ La **rectificación** no necesitó endpoints nuevos: se hace por los de actualiz
 | 5–6 | Publicar la política en `/privacidad`; integrar los avisos en los formularios; cifrado de columna para RUT y sueldo | Pendiente |
 | 7–9 | Suscribir DPA, reducir el alcance OAuth de Drive, resolver Render (2.3) | Pendiente (contractual) |
 | 9–10 | Simulacro de brecha; interfaz para ARCOP | Pendiente |
-| 11–14 | Fijar plazos e implementar la purga automática; gobernanza (Fase 3) | Pendiente |
+| 1–2 | Fase 3: gobernanza, controles automatizados en CI, plantillas de PR | **Hecho** |
+| 11–14 | Fijar plazos e implementar la purga automática; arrancar el calendario de revisiones | Pendiente |
 | 15–16 | Revisión final, pruebas de penetración, evidencia de cumplimiento lista antes del 01-12-2026 | Pendiente |
 
 ---

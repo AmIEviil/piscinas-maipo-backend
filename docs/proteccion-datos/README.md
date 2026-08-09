@@ -30,6 +30,7 @@ No se completaron con valores inventados a propósito: una política de privacid
 | [encargados-y-transferencias.md](encargados-y-transferencias.md) | Arts. 15, 27 a 29 | Inventario hecho, contratos pendientes |
 | [procedimiento-brechas.md](procedimiento-brechas.md) | Art. 14 septies — Notificación | Procedimiento definido |
 | [politica-retencion.md](politica-retencion.md) | Art. 3 — Finalidad y calidad | Borrador, plazos a validar con contabilidad y RR.HH. |
+| [gobernanza.md](gobernanza.md) | Art. 3 lit. g — Responsabilidad; art. 49 — Modelo de prevención | Calendario de revisiones definido, faltan nombres |
 
 ## Advertencia
 

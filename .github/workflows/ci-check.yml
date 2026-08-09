@@ -1,0 +1,63 @@
+name: CI Check (Quality Control)
+
+# El repositorio solo tenía deploy.yml: se desplegaba sin ninguna validación
+# previa. Este workflow corre en cada push y en los PR hacia main.
+on:
+  push:
+    branches-ignore: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  validate:
+    name: Validate Codebase
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.19.5"
+          cache: "yarn"
+
+      - name: Install Dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Run Linter
+        run: yarn lint
+
+      - name: Verify Build
+        run: yarn build
+
+      # Incluye los controles de gobernanza de protección de datos:
+      # src/audit/cobertura-controladores.spec.ts falla si aparece un
+      # controlador sin @Roles, uno con datos personales sin @Audit, o si
+      # alguno concede acceso al rol Cliente.
+      - name: Run Tests
+        run: yarn test --ci
+
+  audit:
+    name: Dependency Audit
+    runs-on: ubuntu-latest
+    # Informativo: una vulnerabilidad publicada en una dependencia transitiva
+    # no debe bloquear un despliegue urgente, pero sí tiene que verse.
+    continue-on-error: true
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.19.5"
+          cache: "yarn"
+
+      - name: Install Dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Audit Dependencies
+        run: yarn audit --level high
