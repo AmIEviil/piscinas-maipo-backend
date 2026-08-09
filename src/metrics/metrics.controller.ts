@@ -1,9 +1,12 @@
 import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { MetricsService } from './metrics.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { ROLES } from '../auth/constants/roles';
 
 @Controller('metrics')
 @UseGuards(JwtAuthGuard)
+@Roles(ROLES.SUPER_ADMIN, ROLES.ADMIN)
 export class MetricsController {
   constructor(private readonly metricsService: MetricsService) {}
 
