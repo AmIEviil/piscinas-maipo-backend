@@ -6,6 +6,19 @@ import { ProductType } from './entities/product-type';
 import { FilterProductDto } from './dto/FilterProduct.dto';
 import { ProductHistory } from './entities/product-history';
 
+// Forma de las filas crudas de getWeeklyProductUsage. `getRawMany()` sin
+// parametro de tipo devuelve `any[]`, y el acceso a sus campos deja de estar
+// verificado: el lint lo marca como acceso inseguro y el compilador no detecta
+// un alias mal escrito en el `addSelect`.
+interface WeeklyUsageRow {
+  id: string;
+  nombre: string;
+  tipoNombre: string | null;
+  cantDisponible: number | null;
+  stockMinimo: number | null;
+  usadoEnSemana: string | number;
+}
+
 @Injectable()
 export class ProductsService {
   constructor(
@@ -22,7 +35,6 @@ export class ProductsService {
   }
 
   async findByFilters(filters: FilterProductDto): Promise<Product[]> {
-
     const query = this.productRepository
       .createQueryBuilder('product')
       .innerJoinAndSelect('product.tipo', 'tipo')
@@ -55,7 +67,6 @@ export class ProductsService {
     >();
 
     for (const product of products) {
-
       const nombre = product.nombre ?? 'Sin tipo';
 
       const disponibles = product.cant_disponible ?? 0;
@@ -208,17 +219,23 @@ export class ProductsService {
       .groupBy('p.id')
       .addGroupBy('tipo.nombre')
       .orderBy('p.nombre', 'ASC')
-      .getRawMany();
+      .getRawMany<WeeklyUsageRow>();
 
-    return rows.map((r) => ({
-      nombre: r.nombre,
-      tipo: r.tipoNombre ?? '—',
-      usadoEnSemana: Number(r.usadoEnSemana),
-      cantDisponible: r.cantDisponible ?? 0,
-      stockMinimo: r.stockMinimo ?? null,
-      recomendarCompra:
-        r.stockMinimo !== null && r.cantDisponible <= r.stockMinimo,
-    }));
+    return rows.map((r) => {
+      // `cantDisponible` nula se trata como 0, que es lo que hacia la
+      // comparacion anterior (`null <= n` coacciona a `0 <= n`).
+      const cantDisponible = r.cantDisponible ?? 0;
+      const stockMinimo = r.stockMinimo ?? null;
+
+      return {
+        nombre: r.nombre,
+        tipo: r.tipoNombre ?? '—',
+        usadoEnSemana: Number(r.usadoEnSemana),
+        cantDisponible,
+        stockMinimo,
+        recomendarCompra: stockMinimo !== null && cantDisponible <= stockMinimo,
+      };
+    });
   }
 
   async getLowStockProducts(): Promise<Product[]> {

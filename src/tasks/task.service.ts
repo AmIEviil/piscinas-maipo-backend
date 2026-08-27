@@ -24,9 +24,15 @@ export class TasksService {
       this.logger.log(`✅ Ejecutando tarea cada 2 horas`);
     } catch (error) {
       if (error instanceof Error) {
-        this.logger.error('❌ Error al ejecutar tarea cada 2 horas:', error.message);
+        this.logger.error(
+          '❌ Error al ejecutar tarea cada 2 horas:',
+          error.message,
+        );
       } else {
-        this.logger.error('❌ Error al ejecutar tarea cada 2 horas:', String(error));
+        this.logger.error(
+          '❌ Error al ejecutar tarea cada 2 horas:',
+          String(error),
+        );
       }
     }
   }
@@ -45,7 +51,9 @@ export class TasksService {
         return;
       }
 
-      this.logger.log(`⚠️ Stock check: ${products.length} product(s) below minimum — sending alert`);
+      this.logger.log(
+        `⚠️ Stock check: ${products.length} product(s) below minimum — sending alert`,
+      );
       await this.mailService.sendLowStockAlert(products, adminEmails);
     } catch (error) {
       this.logger.error('❌ Error in low stock alert cron:', error);
@@ -66,7 +74,10 @@ export class TasksService {
           ? `💳 Pending accounts: ${pendingClients.length} client(s) — sending alert`
           : '✅ Pending accounts: all up to date',
       );
-      await this.mailService.sendPendingAccountsSummary(pendingClients, adminEmails);
+      await this.mailService.sendPendingAccountsSummary(
+        pendingClients,
+        adminEmails,
+      );
     } catch (error) {
       this.logger.error('❌ Error in pending accounts cron:', error);
     }
@@ -85,7 +96,11 @@ export class TasksService {
       this.logger.log(
         `📋 Daily maintenance summary: ${maintenances.length} record(s) for ${today.toLocaleDateString('es-CL')}`,
       );
-      await this.mailService.sendDailyMaintenanceSummary(maintenances, adminEmails, today);
+      await this.mailService.sendDailyMaintenanceSummary(
+        maintenances,
+        adminEmails,
+        today,
+      );
     } catch (error) {
       this.logger.error('❌ Error in daily maintenance summary cron:', error);
     }
@@ -114,19 +129,29 @@ export class TasksService {
       nextWeekEnd.setDate(today.getDate() + 5); // Friday
       nextWeekEnd.setHours(23, 59, 59, 999);
 
-      const [thisWeekMaintenances, nextWeekMaintenances, productUsage, adminEmails] =
-        await Promise.all([
-          this.maintenanceService.findByDateRange(weekStart, weekEnd),
-          this.maintenanceService.findByDateRange(nextWeekStart, nextWeekEnd),
-          this.productsService.getWeeklyProductUsage(weekStart, weekEnd),
-          this.usersService.findAdminEmails(),
-        ]);
+      const [
+        thisWeekMaintenances,
+        nextWeekMaintenances,
+        productUsage,
+        adminEmails,
+      ] = await Promise.all([
+        this.maintenanceService.findByDateRange(weekStart, weekEnd),
+        this.maintenanceService.findByDateRange(nextWeekStart, nextWeekEnd),
+        this.productsService.getWeeklyProductUsage(weekStart, weekEnd),
+        this.usersService.findAdminEmails(),
+      ]);
 
       this.logger.log(
         `📊 Weekly summary: ${thisWeekMaintenances.length} this week, ${nextWeekMaintenances.length} scheduled next week`,
       );
       await this.mailService.sendWeeklyMaintenanceSummary(
-        { thisWeekMaintenances, nextWeekMaintenances, productUsage, weekStart, weekEnd },
+        {
+          thisWeekMaintenances,
+          nextWeekMaintenances,
+          productUsage,
+          weekStart,
+          weekEnd,
+        },
         adminEmails,
       );
     } catch (error) {
@@ -139,17 +164,28 @@ export class TasksService {
   async handleMonthlyConsolidation() {
     try {
       const now = new Date();
-      const firstOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      const firstOfLastMonth = new Date(
+        now.getFullYear(),
+        now.getMonth() - 1,
+        1,
+      );
       const lastOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
       firstOfLastMonth.setHours(0, 0, 0, 0);
       lastOfLastMonth.setHours(23, 59, 59, 999);
 
-      const [maintenances, productUsage, pendingClients, adminEmails] = await Promise.all([
-        this.maintenanceService.findByDateRange(firstOfLastMonth, lastOfLastMonth),
-        this.productsService.getWeeklyProductUsage(firstOfLastMonth, lastOfLastMonth),
-        this.maintenanceService.findClientsWithPendingPayments(),
-        this.usersService.findAdminEmails(),
-      ]);
+      const [maintenances, productUsage, pendingClients, adminEmails] =
+        await Promise.all([
+          this.maintenanceService.findByDateRange(
+            firstOfLastMonth,
+            lastOfLastMonth,
+          ),
+          this.productsService.getWeeklyProductUsage(
+            firstOfLastMonth,
+            lastOfLastMonth,
+          ),
+          this.maintenanceService.findClientsWithPendingPayments(),
+          this.usersService.findAdminEmails(),
+        ]);
 
       this.logger.log(
         `📅 Monthly consolidation: ${maintenances.length} maintenances for ${firstOfLastMonth.toLocaleDateString('es-CL', { month: 'long', year: 'numeric' })}`,

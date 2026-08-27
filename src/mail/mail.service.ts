@@ -28,7 +28,10 @@ export class MailService {
         },
       });
     } catch (error) {
-      this.logger.error(`Error sending activation email to ${user.email}`, error);
+      this.logger.error(
+        `Error sending activation email to ${user.email}`,
+        error,
+      );
     }
   }
 
@@ -49,7 +52,10 @@ export class MailService {
         },
       });
     } catch (error) {
-      this.logger.error(`Error sending password reset email to ${user.email}`, error);
+      this.logger.error(
+        `Error sending password reset email to ${user.email}`,
+        error,
+      );
     }
   }
 
@@ -163,7 +169,10 @@ export class MailService {
   ): Promise<void> {
     if (!adminEmails.length) return;
     try {
-      const totalGeneral = pendingClients.reduce((s, c) => s + c.totalPendiente, 0);
+      const totalGeneral = pendingClients.reduce(
+        (s, c) => s + c.totalPendiente,
+        0,
+      );
       await this.mailerService.sendMail({
         to: adminEmails,
         subject: pendingClients.length
@@ -209,9 +218,13 @@ export class MailService {
   ): Promise<void> {
     if (!adminEmails.length) return;
     try {
-      const realizadas = data.thisWeekMaintenances.filter((m) => m.realizada).length;
+      const realizadas = data.thisWeekMaintenances.filter(
+        (m) => m.realizada,
+      ).length;
       const noRealizadas = data.thisWeekMaintenances.length - realizadas;
-      const productosAComprar = data.productUsage.filter((p) => p.recomendarCompra);
+      const productosAComprar = data.productUsage.filter(
+        (p) => p.recomendarCompra,
+      );
 
       await this.mailerService.sendMail({
         to: adminEmails,
@@ -297,7 +310,9 @@ export class MailService {
         (s, c) => s + c.totalPendiente,
         0,
       );
-      const productosAComprar = data.productUsage.filter((p) => p.recomendarCompra);
+      const productosAComprar = data.productUsage.filter(
+        (p) => p.recomendarCompra,
+      );
 
       await this.mailerService.sendMail({
         to: adminEmails,
@@ -360,7 +375,8 @@ export class MailService {
         template: 'weekly-summary',
         context: {
           ...data,
-          recentPaymentsTotalFormatted: data.recentPaymentsTotal.toLocaleString('es-CL'),
+          recentPaymentsTotalFormatted:
+            data.recentPaymentsTotal.toLocaleString('es-CL'),
           semana: new Date().toLocaleDateString('es-CL'),
         },
       });

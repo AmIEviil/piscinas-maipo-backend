@@ -26,7 +26,9 @@ export class CreateClientDto {
   telefono: string;
 
   @IsOptional()
-  @Transform(({ value }) => (value === '' ? undefined : value))
+  @Transform(({ value }: { value: unknown }) =>
+    value === '' ? undefined : value,
+  )
   @IsEmail()
   @MaxLength(254)
   email?: string;
