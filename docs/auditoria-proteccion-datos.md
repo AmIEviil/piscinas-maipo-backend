@@ -52,7 +52,7 @@ Durante la implementación aparecieron **tres defectos adicionales** que la revi
 
 ---
 
-**C-1 — Tráfico sin TLS: datos personales viajan en texto claro**
+**C-1 — Tráfico sin TLS: datos personales viajan en texto claro** *(revisado tras inspeccionar el servidor: en gran parte cerrado, ver § 7)*
 
 `src/main.ts:14-17` incluye en la whitelist de CORS `http://72.61.219.117` y `http://72.61.219.117:80`. El `.env` del frontend apunta a `http://localhost:3000`. `docker-compose.yml` expone `backend:3001` y `frontend:8080` sin proxy inverso ni terminación TLS.
 
@@ -492,7 +492,7 @@ Los controles que se podían automatizar, se automatizaron: un checklist que dep
 |---|---|---|
 | 0 (72 h) | Fase 0: SQL injection, `configure/:id`, tipos de token | **Hecho** (queda mover la llave SSH y rotar credenciales) |
 | 1–2 | Autorización, sesiones, auditoría de accesos, validación de archivos, CSP (1.1–1.5) | **Hecho en código** |
-| 2–3 | Despliegue: reverse proxy con TLS, dominio propio, `docker-compose`, cifrado de volumen | `docker-compose` **hecho**; proxy y certbot escritos y validados en `infra/`, **pendiente aplicar en el VPS** |
+| 2–3 | Despliegue: reverse proxy con TLS, dominio propio, `docker-compose`, cifrado de volumen | TLS y dominio **ya existían** (Cloudflare + Nginx Proxy Manager, ver § 7). `docker-compose` reconciliado en `infra/docker-compose.servidor.yml`, pendiente aplicar. Cifrado de volumen pendiente |
 | 3–4 | Alinear payloads del frontend y activar `forbidNonWhitelisted`; cablear el flujo de refresh y bajar el access token a 1 h; paginación | Pendiente |
 | 1–2 | Fase 2: registro de actividades, política, avisos, procedimientos ARCOP y de brechas, retención, endpoints ARCOP | **Hecho** (borradores + código) |
 | 3–4 | Completar datos societarios y plazos en los siete documentos; validación legal | Pendiente (requiere datos de la empresa) |
@@ -512,3 +512,56 @@ Esta auditoría se basa exclusivamente en la revisión estática del código fue
 **No cubre**: configuración real del servidor de producción, reglas de firewall, estado del sistema operativo del VPS, configuración efectiva de Cloudinary y Google Drive, respaldos existentes, ni pruebas dinámicas de explotación. Se recomienda una revisión de infraestructura y un test de penetración una vez completada la Fase 1.
 
 Este documento es un análisis técnico de cumplimiento y no constituye asesoría legal. La redacción final de la política de privacidad, los contratos de encargo y el modelo de prevención de infracciones debe ser validada por un abogado especialista en protección de datos.
+
+---
+
+## 7. Verificación contra el servidor de producción (2026-08-27)
+
+La auditoría original fue estática. Esta sección recoge lo comprobado por acceso SSH al VPS `72.61.219.117`, y corrige varios supuestos.
+
+### 7.1 Topología real
+
+```
+Cloudflare --> npm-npm-1 (80/443, certificado Let's Encrypt)
+                 |-- /     -> piscinas_frontend:80
+                 |-- /api  -> piscinas_backend:3000
+```
+
+Ni el backend ni el frontend publican puertos al exterior: solo son alcanzables por la red interna de Docker y por el Nginx Proxy Manager. El mismo proxy sirve un segundo proyecto (`teteria_*`) en la misma máquina.
+
+**C-1 está en gran parte cerrado.** Existe dominio propio (`piscinaselmaipo.cl`), certificado válido y redirección forzada de HTTP a HTTPS, verificada desde fuera (`http` → 301, `https` → 200). Lo que queda:
+
+- **HSTS está apagado** en el proxy host. Sin ella, la primera petición de cada visitante sale en texto claro antes de que el 301 la corrija.
+- **Falta confirmar el modo SSL de Cloudflare.** En modo *Flexible*, Cloudflare habla HTTPS con el navegador y HTTP plano con el VPS: el tramo Cloudflare–origen seguiría en claro y C-1 seguiría abierto. Debe ser *Full (strict)*; el origen ya tiene certificado válido, así que lo soporta.
+- **El origen responde por IP directa**, de modo que cualquiera puede saltarse Cloudflare. El firewall debería aceptar 80 y 443 solo desde los rangos de Cloudflare.
+
+### 7.2 Hallazgo nuevo — N-9: secretos en un archivo legible por toda la máquina
+
+`/opt/piscinas/docker-compose.yml` y `/opt/piscinas/.env` tenían permisos **777** desde abril de 2026. El compose contenía **en texto plano**:
+
+- la contraseña de PostgreSQL, dos veces (`POSTGRES_PASSWORD` y dentro de `DATABASE_URL`);
+- `GOOGLE_CLIENT_SECRET` y `GOOGLE_REFRESH_TOKEN`.
+
+Cualquier proceso o usuario de la máquina —que además hospeda otro proyecto— pudo leerlos durante cuatro meses. **Todos esos secretos deben rotarse.** Los permisos ya se corrigieron a 600; la rotación sigue pendiente y es acción de operación, no de código.
+
+Esto agrava A-8: el problema real no era el fallback `:-root` (que no está en el archivo desplegado), sino una credencial fija en un archivo de acceso irrestricto.
+
+### 7.3 El inventario del § 2 sobrestima la exposición actual
+
+Las tablas `empleado`, `employee_notes` y `vehicle` **no existen en la base de producción**. Los módulos correspondientes nunca se desplegaron. Hoy la base contiene 157 clientes, 3 usuarios y 138 mantenciones — **ningún RUT ni remuneración**.
+
+El inventario del § 2 sigue siendo correcto como descripción del código y de lo que el sistema tratará en cuanto esos módulos entren en servicio, y el registro de actividades de tratamiento debe cubrirlos. Pero la exposición actual es menor, y eso cambia la urgencia relativa del cifrado de columna para RUT y sueldo: hay tiempo de hacerlo **antes** de que existan los datos, que es cuando sale barato.
+
+### 7.4 Integraciones sin configurar en producción
+
+- **Cloudinary no funciona.** El código lee `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY` y `CLOUDINARY_API_SECRET`; ninguna está definida en el contenedor. El compose fija `CLOUDINARY_URL: cloudinary://dummy:dummy@dummy`, que el código no lee.
+- **Google Drive escribe fuera de la carpeta configurada.** El compose fija `GOOGLE_DRIVE_FOLDER_ID: dummy`, y `environment` tiene prioridad sobre `env_file`.
+- **El correo transaccional no sale.** `GMAIL_USER`, `GMAIL_APP_PASSWORD` y `MAIL_FROM` no están definidas, y `MailService` traga la excepción en un `try/catch`: falla en silencio.
+
+Lo último **bloquea el despliegue de la Fase 0**: la activación de cuenta pasó a autorizarse con el token que llega por correo, así que sin correo no se puede activar ninguna cuenta nueva.
+
+### 7.5 Estado de las migraciones
+
+La tabla `migrations` existe con 5 de los 6 registros esperados; falta `CreateRoles1763087367490`, que hace `INSERT INTO "roles"`. Ejecutar `yarn migration:run` sin declararla como aplicada **duplicaría los roles Admin, Cliente y Técnico** antes de llegar a las dos migraciones nuevas. `access_audit` y `data_deletion_log` todavía no existen.
+
+El procedimiento corregido está en `infra/README.md` § 3.
