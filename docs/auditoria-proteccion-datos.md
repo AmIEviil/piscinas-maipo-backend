@@ -312,7 +312,7 @@ Sobre la **Ley 21.663 (Marco de Ciberseguridad)**: el proyecto no parece calific
 
 | Acción | Hallazgo | Detalle |
 |---|---|---|
-| Mover `vps_key.pem` fuera del árbol del proyecto | C-3 | A `~/.ssh/`, con passphrase. Crear `.gitignore` en la raíz del monorepo con `*.pem`, `*.key`, `.env`. No requiere rotación: la raíz no está versionada. |
+| Mover `vps_key.pem` fuera del árbol del proyecto | C-3 | **Parcial.** El `.gitignore` de la raíz ya existe y excluye `*.pem`, `*.key` y `.env`. Falta mover la llave a `~/.ssh/` y verificar que tenga passphrase: los comandos están en `infra/README.md` § 8. No requiere rotación: la raíz no está versionada. |
 | Rotar credenciales del `.env` | — | `JWT_SECRET`, contraseña de BD, API secret de Cloudinary, refresh token de Google, app password de Gmail. **La rotación de `JWT_SECRET` es necesaria además por otro motivo**: invalida los tokens ya emitidos sin claim `typ`, que de otro modo seguirían siendo rechazados con un 401 confuso hasta expirar. |
 
 **Cambio incompatible al desplegar:** los tokens emitidos antes de este cambio no llevan el claim `typ` y `JwtStrategy` los rechaza. **Todas las sesiones activas se cerrarán** y los usuarios deberán volver a iniciar sesión. El interceptor de respuesta del frontend ya redirige a `/login` ante un 401, por lo que la transición es automática, pero conviene avisar al equipo antes de publicar.
@@ -334,6 +334,13 @@ Sobre la **Ley 21.663 (Marco de Ciberseguridad)**: el proyecto no parece calific
 **Requiere ejecutar las migraciones** (`yarn migration:run`) antes de arrancar:
 - `1786000000000-CreateAccessAudit` — tabla `access_audit`. Si no existe, el interceptor registra el fallo en el log del servidor pero no interrumpe las peticiones.
 - `1786000100000-CreateDeletionLog` — tabla `data_deletion_log`. Sin ella, las supresiones ARCOP fallan.
+
+**Dos obstáculos detectados al probar la ejecución, ambos anteriores a esta rama:**
+
+1. `yarn migration:run` abortaba antes de ejecutar nada con `Entity metadata for Product#historial was not found`: `AppDataSource` (`src/data-source.ts`) no compartía la lista de entidades del `AppModule` y le faltaban seis. Daba igual mientras el esquema lo creara `synchronize`; deja de dar igual ahora que hay tablas que solo existen por migración. Corregido.
+2. El esquema de producción lo creó `synchronize`, no las migraciones, así que la tabla `migrations` probablemente esté vacía o no exista. En ese estado el CLI da por pendientes **todas** las migraciones desde la primera y ejecuta `CreateRoles`, `CreateClients` y `CreateUsers` sobre tablas que ya existen. Antes de correrlas hay que declarar las seis antiguas como aplicadas sin ejecutarlas; el procedimiento está en `infra/README.md` § 5.1.
+
+Verificado contra una base vacía: las dos migraciones nuevas se aplican, `down()` revierte y una segunda corrida informa `No migrations are pending`.
 
 **Endpoints nuevos de la Fase 2** (todos Superadmin, todos auditados):
 - `GET /api/arcop/cliente/:id/exportar`, `GET /api/arcop/empleado/:id/exportar`
@@ -413,7 +420,9 @@ Sobre la **Ley 21.663 (Marco de Ciberseguridad)**: el proyecto no parece calific
 | Access token a 1 h | No hay flujo de refresh conectado en el frontend (`AuthService.ts` no llama a `refreshToken`). Bajar el TTL cerraría la sesión cada hora. Primero hay que cablear el refresh, que ya está listo y con rotación en el backend. |
 | Antimalware en las subidas | Requiere un servicio externo (ClamAV o equivalente) y una decisión de infraestructura. |
 
-**Fuera del código, sigue pendiente:** reverse proxy con TLS y Let's Encrypt, dominio propio en lugar de `72.61.219.117`, eliminar el fallback `:-root` de `docker-compose.yml`, y cifrado del volumen de datos.
+**Fuera del código:** el fallback `:-root` de `docker-compose.yml` ya no existe; `DB_PASSWORD`, `JWT_SECRET` y `FRONTEND_URL` son ahora variables obligatorias y `docker-compose` falla nombrando la que falte en vez de arrancar con `root`. Backend y frontend pasan a publicarse solo en `127.0.0.1`.
+
+La configuración del reverse proxy con TLS y Let's Encrypt está escrita y validada con `nginx -t` en `infra/nginx/piscinas.conf` e `infra/docker-compose.proxy.yml`, con el procedimiento completo en `infra/README.md`. **Falta aplicarla en el VPS**, junto con el dominio propio en lugar de `72.61.219.117` y el cifrado del volumen de datos. Estos archivos viven en la raíz del monorepo, que no está versionada.
 
 ### Fase 2 — Cumplimiento normativo
 
@@ -483,7 +492,7 @@ Los controles que se podían automatizar, se automatizaron: un checklist que dep
 |---|---|---|
 | 0 (72 h) | Fase 0: SQL injection, `configure/:id`, tipos de token | **Hecho** (queda mover la llave SSH y rotar credenciales) |
 | 1–2 | Autorización, sesiones, auditoría de accesos, validación de archivos, CSP (1.1–1.5) | **Hecho en código** |
-| 2–3 | Despliegue: reverse proxy con TLS, dominio propio, `docker-compose`, cifrado de volumen | Pendiente (infraestructura) |
+| 2–3 | Despliegue: reverse proxy con TLS, dominio propio, `docker-compose`, cifrado de volumen | `docker-compose` **hecho**; proxy y certbot escritos y validados en `infra/`, **pendiente aplicar en el VPS** |
 | 3–4 | Alinear payloads del frontend y activar `forbidNonWhitelisted`; cablear el flujo de refresh y bajar el access token a 1 h; paginación | Pendiente |
 | 1–2 | Fase 2: registro de actividades, política, avisos, procedimientos ARCOP y de brechas, retención, endpoints ARCOP | **Hecho** (borradores + código) |
 | 3–4 | Completar datos societarios y plazos en los siete documentos; validación legal | Pendiente (requiere datos de la empresa) |
