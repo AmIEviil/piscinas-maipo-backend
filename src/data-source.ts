@@ -17,6 +17,18 @@ import { UploadedFiles } from './uploaded-files/entities/uploaded-files.entity';
 import { ComprobantePago } from './pagos/entities/comprobante-pago.entity';
 import { AccessAudit } from './audit/entities/access-audit.entity';
 import { DeletionLog } from './arcop/entities/deletion-log.entity';
+// El DataSource del CLI no compartia la lista de entidades del AppModule y le
+// faltaban seis. Como ProductHistory es el lado inverso de Product#historial,
+// TypeORM no lograba construir los metadatos y `yarn migration:run` abortaba
+// antes de ejecutar ninguna migracion: hasta ahora el esquema lo creaba
+// `synchronize: true`, asi que el fallo pasaba desapercibido. Las tablas
+// access_audit y data_deletion_log si dependen de sus migraciones.
+import { ProductHistory } from './products/entities/product-history';
+import { Employee } from './empleados/entities/empleado.entity';
+import { EmployeeNote } from './empleados/entities/employee_notes.entity';
+import { MigrationAudit } from './migraciones/entities/migration-audit.entity';
+import { Observaciones } from './observaciones/entity/observaciones.entity';
+import { Vehicle } from './vehicles/entities/vehicle.entity';
 
 dotenv.config();
 
@@ -52,6 +64,12 @@ export const AppDataSource = new DataSource({
     ComprobantePago,
     AccessAudit,
     DeletionLog,
+    ProductHistory,
+    Employee,
+    EmployeeNote,
+    MigrationAudit,
+    Observaciones,
+    Vehicle,
   ],
   migrations: [__dirname + '/migrations/*{.ts,.js}'],
 });
