@@ -1,4 +1,11 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinTable,
+  ManyToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
+import { Maintenance } from '../../maintenance/entities/maintenance.entity';
 
 @Entity('comprobante_pago')
 export class ComprobantePago {
@@ -22,4 +29,16 @@ export class ComprobantePago {
 
   @Column({ type: 'uuid', nullable: false })
   parentId: string;
+
+  /**
+   * Visitas que cubre este pago. Muchos a muchos: un pago puede cubrir varias
+   * visitas, y no obliga a tocar la tabla de mantenciones.
+   */
+  @ManyToMany(() => Maintenance, { onDelete: 'CASCADE' })
+  @JoinTable({
+    name: 'comprobante_pago_mantenciones',
+    joinColumn: { name: 'comprobante_pago_id', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'maintenance_id', referencedColumnName: 'id' },
+  })
+  mantenciones: Maintenance[];
 }
