@@ -16,7 +16,16 @@ export class MetricsService {
   // Mantenciones por cada día hábil actual
   async getDailyMetrics() {
     const diasSemana = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
-    const hoy = new Date().toISOString().split('T')[0];
+
+    // El contenedor corre en UTC, así que toISOString() adelanta el día a
+    // partir de las 20:00 de Chile: a esa hora "hoy" pasaba a ser mañana,
+    // realizadas daba 0 y todas las mantenciones aparecían como faltantes.
+    // Se calcula la fecha en la zona del negocio y se instancia al mediodía
+    // para que el Date no vuelva a cruzar el día en ninguna zona horaria.
+    const hoy = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'America/Santiago',
+    }).format(new Date());
+    const fechaHoy = new Date(`${hoy}T12:00:00`);
 
     const results: {
       dia: string;
@@ -26,15 +35,17 @@ export class MetricsService {
     }[] = [];
 
     for (const dia of diasSemana) {
+      // Solo clientes activos: un cliente dado de baja ya no tiene mantención
+      // programada, pero seguía sumando a programadas y a faltantes.
       const programadas = await this.clientRepo.count({
-        where: { dia_mantencion: dia },
+        where: { dia_mantencion: dia, isActive: true },
       });
 
       const realizadas = await this.maintenanceRepo.count({
         where: {
-          fechaMantencion: new Date(hoy),
+          fechaMantencion: fechaHoy,
           realizada: true,
-          client: { dia_mantencion: dia },
+          client: { dia_mantencion: dia, isActive: true },
         },
         relations: ['client'],
       });

@@ -6,6 +6,21 @@ import { ProductType } from './entities/product-type';
 import { FilterProductDto } from './dto/FilterProduct.dto';
 import { ProductHistory } from './entities/product-history';
 
+/**
+ * Fila cruda de getWeeklyProductUsage. Sin este tipo, getRawMany() devuelve
+ * any[] y cada acceso queda como unsafe member access.
+ * usadoEnSemana viene de un SUM(), que el driver de Postgres entrega como
+ * string cuando el resultado es bigint.
+ */
+interface RawWeeklyUsageRow {
+  id: string;
+  nombre: string;
+  tipoNombre: string | null;
+  cantDisponible: number | null;
+  stockMinimo: number | null;
+  usadoEnSemana: string | number;
+}
+
 @Injectable()
 export class ProductsService {
   constructor(
@@ -208,25 +223,43 @@ export class ProductsService {
       .groupBy('p.id')
       .addGroupBy('tipo.nombre')
       .orderBy('p.nombre', 'ASC')
-      .getRawMany();
+      .getRawMany<RawWeeklyUsageRow>();
 
-    return rows.map((r) => ({
-      nombre: r.nombre,
-      tipo: r.tipoNombre ?? '—',
-      usadoEnSemana: Number(r.usadoEnSemana),
-      cantDisponible: r.cantDisponible ?? 0,
-      stockMinimo: r.stockMinimo ?? null,
-      recomendarCompra:
-        r.stockMinimo !== null && r.cantDisponible <= r.stockMinimo,
-    }));
+    return rows.map((r) => {
+      const cantDisponible = Number(r.cantDisponible ?? 0);
+      const stockMinimo = r.stockMinimo ?? null;
+      return {
+        nombre: r.nombre,
+        tipo: r.tipoNombre ?? '—',
+        usadoEnSemana: Number(r.usadoEnSemana),
+        cantDisponible,
+        stockMinimo,
+        // Misma regla que getLowStockProducts: un producto agotado se
+        // recomienda comprar aunque no tenga stock_minimo definido, porque el
+        // formulario de inventario lo guarda en NULL si se deja vacío.
+        recomendarCompra:
+          cantDisponible <= 0 ||
+          (stockMinimo !== null && cantDisponible <= stockMinimo),
+      };
+    });
   }
 
+  /**
+   * Productos que no van a alcanzar para la próxima mantención.
+   *
+   * Un producto agotado entra siempre, tenga o no stock_minimo definido: el
+   * formulario de inventario guarda stock_minimo en NULL cuando se deja el
+   * campo vacío, y con el filtro anterior esos productos quedaban invisibles
+   * para la alerta aunque estuvieran en cero.
+   */
   async getLowStockProducts(): Promise<Product[]> {
     return this.productRepository
       .createQueryBuilder('product')
       .innerJoinAndSelect('product.tipo', 'tipo')
-      .where('product.stock_minimo IS NOT NULL')
-      .andWhere('product.cant_disponible <= product.stock_minimo')
+      .where(
+        '(product.cant_disponible <= 0 OR (product.stock_minimo IS NOT NULL AND product.cant_disponible <= product.stock_minimo))',
+      )
+      .orderBy('product.cant_disponible', 'ASC')
       .getMany();
   }
 }
