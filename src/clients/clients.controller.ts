@@ -17,6 +17,7 @@ import { CreateClientDto } from './dto/CreateClient.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { UpdateCampoDto } from './dto/Campos.dto';
 import { UpdateClientDto } from './dto/UpdateClient.dto';
+import { BulkUpdateClientsDto } from './dto/BulkUpdateClients.dto';
 
 type AuthenticatedRequest = Request & {
   user?: {
@@ -96,6 +97,22 @@ export class ClientsController {
   @Delete('delete/:id')
   remove(@Param('id') id: string): Promise<void> {
     return this.clientService.remove(id);
+  }
+
+  /**
+   * Cambio masivo de dia, ruta o periodicidad para varios clientes.
+   *
+   * Va antes de las rutas con parametro por costumbre del archivo, aunque en
+   * este caso no compiten: 'bulk-update' es un segmento fijo y no lo captura
+   * ningun ':id'.
+   */
+  @Put('bulk-update')
+  bulkUpdate(
+    @Body() dto: BulkUpdateClientsDto,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    const userId = req.user?.id ?? 'Unknown';
+    return this.clientService.bulkUpdate(dto, userId);
   }
 
   @Put('update-campos/:id')
