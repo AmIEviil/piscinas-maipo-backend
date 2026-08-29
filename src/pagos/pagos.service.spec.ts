@@ -176,9 +176,9 @@ describe('PagosService', () => {
     it('lanza un error y no toca nada si el comprobante no existe', async () => {
       manager.findOne.mockResolvedValue(null);
 
-      await expect(service.deleteComprobantePago('c-inexistente')).rejects.toThrow(
-        'ComprobantePago with id c-inexistente not found',
-      );
+      await expect(
+        service.deleteComprobantePago('c-inexistente'),
+      ).rejects.toThrow('ComprobantePago with id c-inexistente not found');
 
       expect(manager.save).not.toHaveBeenCalled();
       expect(manager.remove).not.toHaveBeenCalled();

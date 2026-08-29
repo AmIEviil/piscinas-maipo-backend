@@ -38,9 +38,11 @@ export class ClientsController {
   getClients(
     @Query('nombre') nombre?: string,
     @Query('direccion') direccion?: string,
+    @Query('telefono') telefono?: string,
     @Query('comuna') comuna?: string,
     @Query('dia') dia?: string,
     @Query('ruta') ruta?: string,
+    @Query('frecuencia') frecuencia?: string,
     @Query('isActive') isActive?: boolean,
     @Query('orderBy') orderBy?: string,
     @Query('orderDirection') orderDirection?: 'ASC' | 'DESC',
@@ -48,13 +50,27 @@ export class ClientsController {
     return this.clientService.findByFilters({
       nombre,
       direccion,
+      telefono,
       comuna,
       dia,
       ruta,
+      frecuencia,
       isActive,
       orderBy,
       orderDirection,
     });
+  }
+
+  /**
+   * Periodicidades disponibles.
+   *
+   * Declarada antes de `@Get(':id')` a proposito: Nest resuelve las rutas en
+   * orden de declaracion, y puesta despues, `:id` se tragaria "frecuencias"
+   * como si fuera un uuid.
+   */
+  @Get('frecuencias')
+  findFrecuencias() {
+    return this.clientService.findFrecuencias();
   }
 
   @Get(':id')

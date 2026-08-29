@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Client } from './entities/clients.entity';
+import { MaintenanceTemporality } from './entities/frecuency-maintenance';
 import { FilterClientsDto } from './dto/FilterClients.dto';
 import { CreateClientDto } from './dto/CreateClient.dto';
 import { ObservacionesService } from '../observaciones/observaciones.service';
@@ -14,6 +15,9 @@ export class ClientsService {
   constructor(
     @InjectRepository(Client)
     private readonly clientRepository: Repository<Client>,
+
+    @InjectRepository(MaintenanceTemporality)
+    private readonly temporalidadRepository: Repository<MaintenanceTemporality>,
 
     private readonly observacionesService: ObservacionesService,
   ) {}
@@ -45,15 +49,29 @@ export class ClientsService {
         'valor_mantencion',
       ]),
       isActive: getValorCampoTipoExtendido(client, ['isActive']),
-      frecuencia_mantencion: getValorCampoTipoExtendido(client, [
-        'frecuencia_mantencion',
+      // Se aplana la relacion a dos campos planos en vez de devolver el
+      // objeto {id, nombre}: getValorCampoTipoExtendido serializa con
+      // `${valor}`, asi que la relacion cruda llegaba al front como
+      // "[object Object]" en cuanto alguien la pintaba con String().
+      frecuencia_mantencion: getValorCampoTipoExtendido(
+        { frecuencia_mantencion: client.frecuencia_mantencion?.nombre },
+        ['frecuencia_mantencion'],
+      ),
+      frecuencia_mantencion_id: getValorCampoTipoExtendido(client, [
+        'frecuencia_mantencion_id',
       ]),
     };
     return resp;
   }
 
+  /** Periodicidades disponibles para el selector de clientes. */
+  findFrecuencias(): Promise<MaintenanceTemporality[]> {
+    return this.temporalidadRepository.find({ order: { nombre: 'ASC' } });
+  }
+
   async createClient(client: CreateClientDto): Promise<Client> {
     const newClient = this.clientRepository.create(client);
+    this.alinearFrecuencia(newClient, client.frecuencia_mantencion_id);
     if (client.observacion) {
       await this.observacionesService.createObservacion({
         tipoEntidad: this.tipoEntidad,
@@ -63,6 +81,23 @@ export class ClientsService {
       });
     }
     return this.clientRepository.save(newClient);
+  }
+
+  /**
+   * Deja la relacion `frecuencia_mantencion` de acuerdo con el FK que se
+   * acaba de escribir.
+   *
+   * `findOneBy` carga la relacion (es eager), asi que al guardar conviven en
+   * la misma entidad el objeto viejo y la columna nueva, que apuntan a filas
+   * distintas. Cual de los dos gana al construir el UPDATE depende de como
+   * TypeORM calcule el diff, y ese no es un detalle del que valga la pena
+   * depender: se igualan a mano.
+   */
+  private alinearFrecuencia(client: Client, frecuenciaId?: string) {
+    if (!frecuenciaId) return;
+    client.frecuencia_mantencion = {
+      id: frecuenciaId,
+    } as MaintenanceTemporality;
   }
 
   async update(
@@ -83,6 +118,7 @@ export class ClientsService {
     }
 
     const updatedClient = this.clientRepository.merge(existing, Client);
+    this.alinearFrecuencia(updatedClient, Client.frecuencia_mantencion_id);
     return this.clientRepository.save(updatedClient);
   }
 
@@ -96,6 +132,9 @@ export class ClientsService {
       const updatedClient = this.clientRepository.merge(existing, {
         [campoDto.campo]: campoDto.valor,
       });
+      if (campoDto.campo === 'frecuencia_mantencion_id') {
+        this.alinearFrecuencia(updatedClient, String(campoDto.valor));
+      }
       if (campoDto.campo === 'observacion') {
         await this.observacionesService.createObservacion({
           tipoEntidad: this.tipoEntidad,
@@ -116,7 +155,12 @@ export class ClientsService {
   }
 
   async findByFilters(filters: FilterClientsDto) {
-    const query = this.clientRepository.createQueryBuilder('client');
+    // leftJoinAndSelect explicito: `eager: true` en la relacion solo aplica a
+    // los metodos del repositorio (find/findOne), no al QueryBuilder, asi que
+    // sin esto el listado sale siempre sin frecuencia.
+    const query = this.clientRepository
+      .createQueryBuilder('client')
+      .leftJoinAndSelect('client.frecuencia_mantencion', 'frecuencia');
 
     if (filters.nombre) {
       query.andWhere('client.nombre ILIKE :nombre', {
@@ -128,6 +172,20 @@ export class ClientsService {
       query.andWhere('client.ruta ILIKE :ruta', {
         ruta: `%${filters.ruta}%`,
       });
+    }
+
+    if (filters.telefono) {
+      // Se comparan solo los digitos: los telefonos estan guardados con
+      // formatos mezclados ("569 81490150", "56995328476", "056 97967935"),
+      // asi que un ILIKE crudo sobre la columna no encuentra el mismo numero
+      // escrito de otra forma.
+      const digitos = filters.telefono.replace(/[^0-9]/g, '');
+      if (digitos) {
+        query.andWhere(
+          "regexp_replace(client.telefono, '[^0-9]', '', 'g') LIKE :telefono",
+          { telefono: `%${digitos}%` },
+        );
+      }
     }
 
     if (filters.direccion) {
@@ -148,13 +206,24 @@ export class ClientsService {
       });
     }
 
+    if (filters.frecuencia) {
+      query.andWhere('client.frecuencia_mantencion_id = :frecuencia', {
+        frecuencia: filters.frecuencia,
+      });
+    }
+
     if (filters.isActive) {
       query.andWhere('client.isActive = :isActive', {
         isActive: `${filters.isActive}`,
       });
     }
 
-    if (filters.orderBy) {
+    // Se ordena por el nombre de la periodicidad, no por `client.
+    // frecuencia_mantencion`: esa propiedad es la relacion, no una columna, y
+    // el QueryBuilder generaria SQL invalido.
+    if (filters.orderBy === 'frecuencia_mantencion') {
+      query.orderBy('frecuencia.nombre', filters.orderDirection);
+    } else if (filters.orderBy) {
       query.orderBy(`client.${filters.orderBy}`, filters.orderDirection);
     }
 

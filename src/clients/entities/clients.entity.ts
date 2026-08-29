@@ -49,6 +49,18 @@ export class Client {
   @Column({ name: 'isActive', default: true })
   isActive: boolean;
 
+  /**
+   * Periodicidad de las visitas (Semanal / Quincenal / Mensual).
+   *
+   * La columna se declara ademas de la relacion a proposito: sin un @Column
+   * explicito, `repository.create()` y `repository.merge()` descartan en
+   * silencio un `frecuencia_mantencion_id` suelto del DTO, porque para TypeORM
+   * ese nombre no existe como propiedad de la entidad -- solo como nombre de
+   * columna del @JoinColumn. Es lo que dejaba el campo sin guardarse nunca.
+   */
+  @Column({ name: 'frecuencia_mantencion_id', type: 'uuid', nullable: true })
+  frecuencia_mantencion_id: string;
+
   @ManyToOne(() => MaintenanceTemporality, (t) => t.clientes, { eager: true })
   @JoinColumn({ name: 'frecuencia_mantencion_id' })
   frecuencia_mantencion: MaintenanceTemporality;

@@ -3,6 +3,7 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  IsUUID,
   MaxLength,
   Min,
 } from 'class-validator';
@@ -49,8 +50,8 @@ export class CreateClientDto {
   valor_mantencion: number;
 
   @IsOptional()
-  @IsString()
-  frequencia_mantencion_id?: string;
+  @IsUUID()
+  frecuencia_mantencion_id?: string;
 
   @IsOptional()
   @IsString()
