@@ -40,8 +40,20 @@ export class PagosController {
     @UploadedFile(new FileValidationPipe('document'))
     file?: Express.Multer.File,
   ) {
+    // FormData no transporta arreglos: un id llega como string suelto y
+    // varios llegan como arreglo. Se normaliza a arreglo siempre.
+    const crudo = dto.mantencionIds as unknown;
+    const mantencionIds = Array.isArray(crudo)
+      ? crudo.map(String)
+      : typeof crudo === 'string' && crudo.length > 0
+        ? [crudo]
+        : [];
+
     this.logger.log('Creando un nuevo comprobante de pago', { dto });
-    return await this.pagosService.createComprobantePago(dto, file);
+    return await this.pagosService.createComprobantePago(
+      { ...dto, mantencionIds },
+      file,
+    );
   }
 
   @Get('by-parent/:parentId')

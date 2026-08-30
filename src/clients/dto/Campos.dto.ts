@@ -12,7 +12,7 @@ const ALLOWED_CAMPOS = [
   'ruta',
   'isActive',
   'observacion',
-  'frequencia_mantencion_id',
+  'frecuencia_mantencion_id',
 ] as const;
 
 export class UpdateCampoDto {

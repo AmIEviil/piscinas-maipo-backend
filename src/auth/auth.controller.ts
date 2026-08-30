@@ -69,5 +69,4 @@ export class AuthController {
   ) {
     return this.authService.setSessionClosedAt(userId, logout_at);
   }
-
 }

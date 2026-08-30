@@ -2,6 +2,7 @@ import * as dotenv from 'dotenv';
 import { DataSource } from 'typeorm';
 import { Client } from './clients/entities/clients.entity';
 import { Product } from './products/entities/product.entity';
+import { ProductHistory } from './products/entities/product-history';
 import { Maintenance } from './maintenance/entities/maintenance.entity';
 import { MaintenanceProduct } from './maintenance/entities/maintenance-product.entity';
 import { Revestimiento } from './revestimientos/entities/revestimiento.entity';
@@ -27,6 +28,7 @@ export const AppDataSource = new DataSource({
   database: process.env.DB_NAME,
   entities: [
     Product,
+    ProductHistory,
     Client,
     Maintenance,
     MaintenanceProduct,

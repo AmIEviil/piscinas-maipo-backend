@@ -17,6 +17,7 @@ import { CreateClientDto } from './dto/CreateClient.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { UpdateCampoDto } from './dto/Campos.dto';
 import { UpdateClientDto } from './dto/UpdateClient.dto';
+import { BulkUpdateClientsDto } from './dto/BulkUpdateClients.dto';
 
 type AuthenticatedRequest = Request & {
   user?: {
@@ -38,9 +39,11 @@ export class ClientsController {
   getClients(
     @Query('nombre') nombre?: string,
     @Query('direccion') direccion?: string,
+    @Query('telefono') telefono?: string,
     @Query('comuna') comuna?: string,
     @Query('dia') dia?: string,
     @Query('ruta') ruta?: string,
+    @Query('frecuencia') frecuencia?: string,
     @Query('isActive') isActive?: boolean,
     @Query('orderBy') orderBy?: string,
     @Query('orderDirection') orderDirection?: 'ASC' | 'DESC',
@@ -48,13 +51,27 @@ export class ClientsController {
     return this.clientService.findByFilters({
       nombre,
       direccion,
+      telefono,
       comuna,
       dia,
       ruta,
+      frecuencia,
       isActive,
       orderBy,
       orderDirection,
     });
+  }
+
+  /**
+   * Periodicidades disponibles.
+   *
+   * Declarada antes de `@Get(':id')` a proposito: Nest resuelve las rutas en
+   * orden de declaracion, y puesta despues, `:id` se tragaria "frecuencias"
+   * como si fuera un uuid.
+   */
+  @Get('frecuencias')
+  findFrecuencias() {
+    return this.clientService.findFrecuencias();
   }
 
   @Get(':id')
@@ -80,6 +97,22 @@ export class ClientsController {
   @Delete('delete/:id')
   remove(@Param('id') id: string): Promise<void> {
     return this.clientService.remove(id);
+  }
+
+  /**
+   * Cambio masivo de dia, ruta o periodicidad para varios clientes.
+   *
+   * Va antes de las rutas con parametro por costumbre del archivo, aunque en
+   * este caso no compiten: 'bulk-update' es un segmento fijo y no lo captura
+   * ningun ':id'.
+   */
+  @Put('bulk-update')
+  bulkUpdate(
+    @Body() dto: BulkUpdateClientsDto,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    const userId = req.user?.id ?? 'Unknown';
+    return this.clientService.bulkUpdate(dto, userId);
   }
 
   @Put('update-campos/:id')

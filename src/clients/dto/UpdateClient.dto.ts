@@ -10,6 +10,6 @@ export interface UpdateClientDto {
   ruta?: string;
   valor_mantencion?: number;
   isActive?: boolean;
-  frequencia_mantencion_id?: string;
+  frecuencia_mantencion_id?: string;
   observacion?: string;
 }

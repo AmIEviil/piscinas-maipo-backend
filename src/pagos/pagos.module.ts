@@ -3,6 +3,7 @@ import { PagosService } from './pagos.service';
 import { PagosController } from './pagos.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ComprobantePago } from './entities/comprobante-pago.entity';
+import { Maintenance } from '../maintenance/entities/maintenance.entity';
 import { GoogleDriveModule } from '../google-drive/google-drive.module';
 import { UploadedFilesModule } from '../uploaded-files/uploaded-files.module';
 
@@ -10,7 +11,7 @@ import { UploadedFilesModule } from '../uploaded-files/uploaded-files.module';
   providers: [PagosService],
   controllers: [PagosController],
   imports: [
-    TypeOrmModule.forFeature([ComprobantePago]),
+    TypeOrmModule.forFeature([ComprobantePago, Maintenance]),
     GoogleDriveModule,
     UploadedFilesModule,
   ],
