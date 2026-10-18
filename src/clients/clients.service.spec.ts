@@ -376,3 +376,142 @@ describe('ClientsService historial', () => {
     );
   });
 });
+
+describe('ClientsService.bulkUpdateValorMantencion', () => {
+  let service: ClientsService;
+  let manager: ReturnType<typeof crearManagerFalso>;
+  let clientRepo: { find: jest.Mock; manager: { transaction: jest.Mock } };
+  let historial: { registrarCambios: jest.Mock; registrarCreacion: jest.Mock };
+
+  const A = '11111111-1111-1111-1111-111111111111';
+  const B = '22222222-2222-2222-2222-222222222222';
+
+  beforeEach(async () => {
+    manager = crearManagerFalso();
+    clientRepo = {
+      find: jest.fn().mockResolvedValue([
+        { id: A, valor_mantencion: 23500 },
+        { id: B, valor_mantencion: 25000 },
+      ]),
+      manager: {
+        transaction: jest.fn((cb: (m: unknown) => Promise<unknown>) =>
+          cb(manager),
+        ),
+      },
+    };
+    historial = {
+      registrarCambios: jest.fn().mockResolvedValue(0),
+      registrarCreacion: jest.fn(),
+    };
+
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        ClientsService,
+        { provide: getRepositoryToken(Client), useValue: clientRepo },
+        {
+          provide: getRepositoryToken(MaintenanceTemporality),
+          useValue: { findOneBy: jest.fn(), find: jest.fn() },
+        },
+        {
+          provide: ObservacionesService,
+          useValue: { createObservacion: jest.fn() },
+        },
+        { provide: ClientHistoryService, useValue: historial },
+      ],
+    }).compile();
+
+    service = module.get<ClientsService>(ClientsService);
+  });
+
+  it('ids repetidos → BadRequestException y sin escrituras', async () => {
+    await expect(
+      service.bulkUpdateValorMantencion(
+        {
+          items: [
+            { id: A, valor: 25000 },
+            { id: A, valor: 26000 },
+          ],
+        },
+        'user-1',
+      ),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(clientRepo.manager.transaction).not.toHaveBeenCalled();
+    expect(manager.updates).toHaveLength(0);
+  });
+
+  it('id inexistente → NotFoundException con la lista, sin transaccion', async () => {
+    clientRepo.find.mockResolvedValue([{ id: A, valor_mantencion: 23500 }]);
+
+    await expect(
+      service.bulkUpdateValorMantencion(
+        {
+          items: [
+            { id: A, valor: 25000 },
+            { id: B, valor: 25000 },
+          ],
+        },
+        'user-1',
+      ),
+    ).rejects.toThrow(`Clientes no encontrados: ${B}`);
+    expect(clientRepo.manager.transaction).not.toHaveBeenCalled();
+    expect(manager.updates).toHaveLength(0);
+  });
+
+  it('actualiza solo los que cambian y cuenta sinCambios', async () => {
+    const resultado = await service.bulkUpdateValorMantencion(
+      {
+        items: [
+          { id: A, valor: 25000 },
+          { id: B, valor: 25000 },
+        ],
+      },
+      'user-1',
+    );
+
+    expect(manager.update).toHaveBeenCalledTimes(1);
+    expect(manager.update).toHaveBeenCalledWith(
+      Client,
+      { id: A },
+      { valor_mantencion: 25000 },
+    );
+    expect(resultado).toEqual({ clientesActualizados: 1, sinCambios: 1 });
+  });
+
+  it('registra historial valor_mantencion origen masivo para cada actualizado', async () => {
+    await service.bulkUpdateValorMantencion(
+      {
+        items: [
+          { id: A, valor: 25000 },
+          { id: B, valor: 25000 },
+        ],
+      },
+      'user-1',
+    );
+
+    expect(historial.registrarCambios).toHaveBeenCalledTimes(1);
+    expect(historial.registrarCambios).toHaveBeenCalledWith(
+      manager,
+      A,
+      [
+        {
+          campo: 'valor_mantencion',
+          valorAnterior: '23500',
+          valorNuevo: '25000',
+        },
+      ],
+      'masivo',
+      'user-1',
+    );
+  });
+
+  it('no toca Maintenance', async () => {
+    clientRepo.find.mockResolvedValue([{ id: A, valor_mantencion: 23500 }]);
+    await service.bulkUpdateValorMantencion(
+      { items: [{ id: A, valor: 30000 }] },
+      'user-1',
+    );
+
+    expect(manager.find).not.toHaveBeenCalled();
+    expect(manager.updates.every((u) => u.entidad === Client)).toBe(true);
+  });
+});

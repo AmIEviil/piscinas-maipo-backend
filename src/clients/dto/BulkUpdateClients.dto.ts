@@ -13,7 +13,9 @@ import {
  * Es una lista blanca corta a proposito: la edicion masiva existe para el
  * cambio de temporada (verano semanal / invierno quincenal) y para rearmar
  * las rutas del dia, no para editar cualquier campo de la ficha. Nombre,
- * telefono o valor se siguen editando cliente por cliente.
+ * telefono se siguen editando cliente por cliente. El valor de mantencion
+ * tiene su propio endpoint masivo (BulkValorMantencionDto) porque lleva un
+ * monto distinto por cliente.
  */
 export const CAMPOS_BULK = [
   'dia_mantencion',

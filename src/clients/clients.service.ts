@@ -15,6 +15,7 @@ import { getValorCampoTipoExtendido } from '../utils/extendedLabel.utils';
 import { UpdateCampoDto } from './dto/Campos.dto';
 import { UpdateClientDto } from './dto/UpdateClient.dto';
 import { BulkUpdateClientsDto } from './dto/BulkUpdateClients.dto';
+import { BulkValorMantencionDto } from './dto/BulkValorMantencion.dto';
 import { ClientHistoryService } from './history/client-history.service';
 import {
   diffSnapshots,
@@ -302,6 +303,75 @@ export class ClientsService {
         mantencionesReprogramadas,
         actualizadoPor: userId,
       };
+    });
+  }
+
+  /**
+   * Cambio masivo del valor de mantencion, con un valor propio por cliente.
+   *
+   * Es un endpoint aparte de `bulkUpdate` porque aqui cada cliente recibe un
+   * monto distinto (subida global mas overrides calculados en el front). Solo
+   * se escribe el cliente cuyo valor realmente cambia; las mantenciones ya
+   * registradas nunca se tocan: conservan el valor con que se hicieron.
+   */
+  async bulkUpdateValorMantencion(
+    dto: BulkValorMantencionDto,
+    userId: string,
+  ): Promise<{ clientesActualizados: number; sinCambios: number }> {
+    const ids = dto.items.map((item) => item.id);
+    if (new Set(ids).size !== ids.length) {
+      throw new BadRequestException('Hay clientes repetidos en la solicitud');
+    }
+
+    const clientes = await this.clientRepository.find({
+      where: { id: In(ids) },
+    });
+
+    if (clientes.length !== ids.length) {
+      const encontrados = new Set(clientes.map((cliente) => cliente.id));
+      const faltantes = ids.filter((id) => !encontrados.has(id));
+      throw new NotFoundException(
+        `Clientes no encontrados: ${faltantes.join(', ')}`,
+      );
+    }
+
+    const actualPorId = new Map(
+      clientes.map((cliente) => [cliente.id, cliente.valor_mantencion]),
+    );
+
+    return this.clientRepository.manager.transaction(async (manager) => {
+      let clientesActualizados = 0;
+      let sinCambios = 0;
+
+      for (const item of dto.items) {
+        const actual = actualPorId.get(item.id);
+        if (actual === item.valor) {
+          sinCambios++;
+          continue;
+        }
+        await manager.update(
+          Client,
+          { id: item.id },
+          { valor_mantencion: item.valor },
+        );
+        // Mismo manager que el UPDATE para que historial y dato no diverjan.
+        await this.historyService.registrarCambios(
+          manager,
+          item.id,
+          [
+            {
+              campo: 'valor_mantencion',
+              valorAnterior: normalizarValor(actual),
+              valorNuevo: normalizarValor(item.valor),
+            },
+          ],
+          'masivo',
+          userId,
+        );
+        clientesActualizados++;
+      }
+
+      return { clientesActualizados, sinCambios };
     });
   }
 

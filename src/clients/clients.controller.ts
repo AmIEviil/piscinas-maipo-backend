@@ -18,6 +18,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { UpdateCampoDto } from './dto/Campos.dto';
 import { UpdateClientDto } from './dto/UpdateClient.dto';
 import { BulkUpdateClientsDto } from './dto/BulkUpdateClients.dto';
+import { BulkValorMantencionDto } from './dto/BulkValorMantencion.dto';
 import { ClientHistoryService } from './history/client-history.service';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { ROLES } from '../auth/roles/roles.constants';
@@ -129,6 +130,17 @@ export class ClientsController {
   ) {
     const userId = req.user?.id ?? 'Unknown';
     return this.clientService.bulkUpdate(dto, userId);
+  }
+
+  /** Cambio masivo del valor de mantencion, un valor por cliente. */
+  @Put('bulk-valor-mantencion')
+  @Roles(ROLES.SUPER_ADMIN, ROLES.ADMIN)
+  bulkValorMantencion(
+    @Body() dto: BulkValorMantencionDto,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    const userId = req.user?.id ?? 'Unknown';
+    return this.clientService.bulkUpdateValorMantencion(dto, userId);
   }
 
   @Put('update-campos/:id')
