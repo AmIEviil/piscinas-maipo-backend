@@ -38,6 +38,7 @@ describe('ClientsService.bulkUpdate', () => {
     manager: { transaction: jest.Mock };
   };
   let temporalidadRepo: { findOneBy: jest.Mock; find: jest.Mock };
+  let historial: { registrarCambios: jest.Mock; registrarCreacion: jest.Mock };
 
   const idsClientes = [
     '11111111-1111-1111-1111-111111111111',
@@ -49,7 +50,9 @@ describe('ClientsService.bulkUpdate', () => {
     clientRepo = {
       find: jest
         .fn()
-        .mockResolvedValue(idsClientes.map((id) => ({ id }) as Client)),
+        .mockResolvedValue(
+          idsClientes.map((id, i) => ({ id, ruta: `R${i + 1}` }) as Client),
+        ),
       findOneBy: jest.fn(),
       merge: jest.fn(),
       save: jest.fn(),
@@ -65,6 +68,11 @@ describe('ClientsService.bulkUpdate', () => {
       find: jest.fn(),
     };
 
+    historial = {
+      registrarCambios: jest.fn().mockResolvedValue(0),
+      registrarCreacion: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ClientsService,
@@ -77,13 +85,7 @@ describe('ClientsService.bulkUpdate', () => {
           provide: ObservacionesService,
           useValue: { createObservacion: jest.fn() },
         },
-        {
-          provide: ClientHistoryService,
-          useValue: {
-            registrarCambios: jest.fn(),
-            registrarCreacion: jest.fn(),
-          },
-        },
+        { provide: ClientHistoryService, useValue: historial },
       ],
     }).compile();
 
@@ -177,6 +179,56 @@ describe('ClientsService.bulkUpdate', () => {
       new Date(lunesProximo.getTime() + 4 * 24 * 60 * 60 * 1000),
     );
     expect(updateMantencion?.datos).toEqual({ fechaMantencion: esperada });
+  });
+
+  it('registra historial solo para los clientes cuyo valor cambia', async () => {
+    await service.bulkUpdate(
+      { ids: idsClientes, campo: 'ruta', valor: 'R2' },
+      'user-1',
+    );
+
+    expect(historial.registrarCambios).toHaveBeenCalledTimes(1);
+    expect(historial.registrarCambios).toHaveBeenCalledWith(
+      manager,
+      idsClientes[0],
+      [{ campo: 'ruta', valorAnterior: 'R1', valorNuevo: 'R2' }],
+      'masivo',
+      'user-1',
+    );
+  });
+
+  it('la periodicidad masiva se registra con el nombre, no el uuid', async () => {
+    await service.bulkUpdate(
+      { ids: idsClientes, campo: 'frecuencia_mantencion_id', valor: 'f1' },
+      'user-1',
+    );
+
+    expect(historial.registrarCambios).toHaveBeenCalledWith(
+      manager,
+      idsClientes[0],
+      [
+        {
+          campo: 'frecuencia_mantencion',
+          valorAnterior: null,
+          valorNuevo: 'Semanal',
+        },
+      ],
+      'masivo',
+      'user-1',
+    );
+  });
+
+  it('registra el historial con el manager de la transaccion', async () => {
+    await service.bulkUpdate(
+      { ids: idsClientes, campo: 'ruta', valor: 'Z' },
+      'user-1',
+    );
+
+    expect(historial.registrarCambios).toHaveBeenCalledTimes(2);
+    const llamadas = historial.registrarCambios.mock.calls as unknown[][];
+    for (const llamada of llamadas) {
+      expect(llamada[0]).toBe(manager);
+    }
   });
 });
 

@@ -9,6 +9,7 @@ import {
   Query,
   UseGuards,
   Req,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { ClientsService } from './clients.service';
 import { Client } from './entities/clients.entity';
@@ -17,12 +18,18 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { UpdateCampoDto } from './dto/Campos.dto';
 import { UpdateClientDto } from './dto/UpdateClient.dto';
 import { BulkUpdateClientsDto } from './dto/BulkUpdateClients.dto';
+import { ClientHistoryService } from './history/client-history.service';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { ROLES } from '../auth/roles/roles.constants';
 import type { AuthenticatedRequest } from '../types/authenticated-request';
 
 @Controller('clients')
 @UseGuards(JwtAuthGuard)
 export class ClientsController {
-  constructor(private readonly clientService: ClientsService) {}
+  constructor(
+    private readonly clientService: ClientsService,
+    private readonly historyService: ClientHistoryService,
+  ) {}
 
   @Get()
   findAll(): Promise<Client[]> {
@@ -68,6 +75,16 @@ export class ClientsController {
     return this.clientService.findFrecuencias();
   }
 
+  /**
+   * Historial de cambios de un cliente. Declarada antes de `:id` por
+   * costumbre del archivo, aunque no compiten: tiene un segmento extra.
+   */
+  @Get(':id/historial')
+  @Roles(ROLES.SUPER_ADMIN, ROLES.ADMIN)
+  findHistorial(@Param('id', ParseUUIDPipe) id: string) {
+    return this.historyService.findByClient(id);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string): any {
     return this.clientService.findOne(id);
@@ -105,6 +122,7 @@ export class ClientsController {
    * ningun ':id'.
    */
   @Put('bulk-update')
+  @Roles(ROLES.SUPER_ADMIN, ROLES.ADMIN)
   bulkUpdate(
     @Body() dto: BulkUpdateClientsDto,
     @Req() req: AuthenticatedRequest,

@@ -16,7 +16,11 @@ import { UpdateCampoDto } from './dto/Campos.dto';
 import { UpdateClientDto } from './dto/UpdateClient.dto';
 import { BulkUpdateClientsDto } from './dto/BulkUpdateClients.dto';
 import { ClientHistoryService } from './history/client-history.service';
-import { diffSnapshots, snapshotCliente } from './history/client-history.utils';
+import {
+  diffSnapshots,
+  normalizarValor,
+  snapshotCliente,
+} from './history/client-history.utils';
 import {
   DIAS_SEMANA,
   aClaveFecha,
@@ -225,6 +229,8 @@ export class ClientsService {
       }
     }
 
+    // El historial guarda el nombre de la periodicidad, no su uuid.
+    let nombreFrecuencia: string | null = null;
     if (dto.campo === 'frecuencia_mantencion_id') {
       const frecuencia = await this.temporalidadRepository.findOneBy({
         id: valor,
@@ -232,11 +238,11 @@ export class ClientsService {
       if (!frecuencia) {
         throw new NotFoundException(`Periodicidad ${valor} no encontrada`);
       }
+      nombreFrecuencia = frecuencia.nombre;
     }
 
     const clientes = await this.clientRepository.find({
       where: { id: In(ids) },
-      select: { id: true },
     });
 
     if (clientes.length !== ids.length) {
@@ -251,12 +257,38 @@ export class ClientsService {
     // como null para no dejar cadenas vacias en la columna.
     const valorAGuardar = dto.campo === 'ruta' && valor === '' ? null : valor;
 
+    const claveHistorial =
+      dto.campo === 'frecuencia_mantencion_id'
+        ? 'frecuencia_mantencion'
+        : dto.campo;
+    const valorHistorial = normalizarValor(
+      dto.campo === 'frecuencia_mantencion_id'
+        ? nombreFrecuencia
+        : valorAGuardar,
+    );
+
     return this.clientRepository.manager.transaction(async (manager) => {
       await manager.update(
         Client,
         { id: In(ids) },
         { [dto.campo]: valorAGuardar },
       );
+
+      // Un registro por cliente y solo si su valor realmente cambia, dentro
+      // de la misma transaccion para que historial y datos no diverjan.
+      for (const cliente of clientes) {
+        const antes = snapshotCliente(cliente);
+        const despues = { ...antes, [claveHistorial]: valorHistorial };
+        const cambios = diffSnapshots(antes, despues);
+        if (cambios.length === 0) continue;
+        await this.historyService.registrarCambios(
+          manager,
+          cliente.id,
+          cambios,
+          'masivo',
+          userId,
+        );
+      }
 
       const mantencionesReprogramadas =
         dto.campo === 'dia_mantencion'
