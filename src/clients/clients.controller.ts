@@ -10,7 +10,6 @@ import {
   UseGuards,
   Req,
 } from '@nestjs/common';
-import type { Request } from 'express';
 import { ClientsService } from './clients.service';
 import { Client } from './entities/clients.entity';
 import { CreateClientDto } from './dto/CreateClient.dto';
@@ -18,12 +17,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { UpdateCampoDto } from './dto/Campos.dto';
 import { UpdateClientDto } from './dto/UpdateClient.dto';
 import { BulkUpdateClientsDto } from './dto/BulkUpdateClients.dto';
-
-type AuthenticatedRequest = Request & {
-  user?: {
-    id?: string;
-  };
-};
+import type { AuthenticatedRequest } from '../types/authenticated-request';
 
 @Controller('clients')
 @UseGuards(JwtAuthGuard)

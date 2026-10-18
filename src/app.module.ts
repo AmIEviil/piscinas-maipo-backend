@@ -27,6 +27,7 @@ import { EmpleadosModule } from './empleados/empleados.module';
 import { VehiclesModule } from './vehicles/vehicles.module';
 import { MailModule } from './mail/mail.module';
 import { GlobalJwtAuthGuard } from './auth/guards/global-jwt-auth.guard';
+import { RolesGuard } from './auth/guards/roles.guard';
 
 @Module({
   imports: [
@@ -81,6 +82,8 @@ import { GlobalJwtAuthGuard } from './auth/guards/global-jwt-auth.guard';
   providers: [
     AppService,
     { provide: APP_GUARD, useClass: GlobalJwtAuthGuard },
+    // Debe ir despues del JWT: necesita request.user ya cargado
+    { provide: APP_GUARD, useClass: RolesGuard },
     { provide: APP_GUARD, useClass: ThrottlerGuard },
   ],
 })
