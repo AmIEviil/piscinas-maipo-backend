@@ -22,11 +22,14 @@ import { ROLES } from '../auth/roles/roles.constants';
 export class RepairsController {
   constructor(private readonly repairsService: RepairsService) {}
 
+  // Tecnico ve las reparaciones desde el modal del cliente (solo lectura)
+  @Roles(ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.TECNICO)
   @Get()
   async findAllRepairs(@Query() filters: FilterRepairDto) {
     return this.repairsService.findAllRepairs(filters);
   }
 
+  @Roles(ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.TECNICO)
   @Get(':id')
   async findOneRepair(@Param('id') id: string) {
     return this.repairsService.findOne(id);

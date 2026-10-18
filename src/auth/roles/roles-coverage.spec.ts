@@ -107,6 +107,8 @@ describe('cobertura de roles en controllers', () => {
     [UploadedFilesController, 'getFilesByParentId'],
     [ClientsController, 'create'],
     [ClientsController, 'update'],
+    [RepairsController, 'findAllRepairs'],
+    [RepairsController, 'findOneRepair'],
   ])('%p.%s permite Tecnico', (ctrl, metodo) => {
     expect(rolesEfectivos(ctrl as Ctrl, metodo)).toContain(ROLES.TECNICO);
   });
@@ -122,6 +124,8 @@ describe('cobertura de roles en controllers', () => {
     [ClientsController, 'bulkUpdate'],
     [ClientsController, 'bulkValorMantencion'],
     [ClientsController, 'findHistorial'],
+    [RepairsController, 'createRepair'],
+    [RepairsController, 'deleteRepair'],
   ])('%p.%s NO permite Tecnico', (ctrl, metodo) => {
     const roles = rolesEfectivos(ctrl as Ctrl, metodo);
     expect(roles.length).toBeGreaterThan(0);
