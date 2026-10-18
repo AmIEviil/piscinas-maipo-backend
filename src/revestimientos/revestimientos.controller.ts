@@ -13,8 +13,11 @@ import { RevestimientosService } from './revestimientos.service';
 import { FilterRevestimientosDto } from './dto/FilterRevestimientos.dto';
 import { IRevestimientoCreate } from './dto/CreateRevestimiento.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { ROLES } from '../auth/roles/roles.constants';
 
 @Controller('revestimiento')
+@Roles(ROLES.SUPER_ADMIN, ROLES.ADMIN)
 @UseGuards(JwtAuthGuard)
 export class RevestimientosController {
   constructor(private readonly revestimientosService: RevestimientosService) {}

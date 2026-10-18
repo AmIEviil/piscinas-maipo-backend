@@ -1,10 +1,13 @@
 import { Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
 import { MigracionesService } from './migraciones.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { ROLES } from '../auth/roles/roles.constants';
 // import { MigrationAccessGuard } from './guards/MigrationAccessGuard';
 // import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 
 @Controller('migrations')
+@Roles(ROLES.SUPER_ADMIN)
 // @UseGuards(JwtAuthGuard, MigrationAccessGuard)
 @UseGuards(JwtAuthGuard)
 export class MigracionesController {

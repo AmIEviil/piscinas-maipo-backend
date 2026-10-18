@@ -11,8 +11,11 @@ import {
 import { UsersService } from './users.service';
 import { User } from './entities/user.entity';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { ROLES } from '../auth/roles/roles.constants';
 
 @Controller('users')
+@Roles(ROLES.SUPER_ADMIN)
 @UseGuards(JwtAuthGuard)
 export class UsersController {
   constructor(private readonly userService: UsersService) {}

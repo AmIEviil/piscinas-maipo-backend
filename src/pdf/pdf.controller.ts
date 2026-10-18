@@ -1,8 +1,11 @@
 import { Controller, Get, Param, Res } from '@nestjs/common';
 import { Response } from 'express';
 import { PdfService } from './pdf.service';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { ROLES } from '../auth/roles/roles.constants';
 
 @Controller('pdf')
+@Roles(ROLES.SUPER_ADMIN, ROLES.ADMIN)
 export class PdfController {
   constructor(private readonly pdfService: PdfService) {}
 

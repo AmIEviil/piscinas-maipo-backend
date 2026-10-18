@@ -16,8 +16,11 @@ import { Response } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { GoogleDriveService } from './google-drive.service';
 import { FileValidationPipe } from '../utils/file-validation.pipe';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { ROLES } from '../auth/roles/roles.constants';
 
 @Controller('drive')
+@Roles(ROLES.SUPER_ADMIN, ROLES.ADMIN)
 export class GoogleDriveController {
   private readonly logger = new Logger(GoogleDriveController.name);
   constructor(private readonly driveService: GoogleDriveService) {}

@@ -5,6 +5,7 @@ import {
   Patch,
   Param,
   ParseUUIDPipe,
+  Req,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
@@ -14,6 +15,10 @@ import { ConfigureAccountDto } from './dto/configure-user.dto';
 import { RequestPasswordResetDto } from './dto/request-password-reset.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { Public } from './decorators/public.decorator';
+import { Roles } from './decorators/roles.decorator';
+import { ROLES } from './roles/roles.constants';
+import { assertSelfOrSuperadmin } from './roles/roles.utils';
+import type { AuthenticatedRequest } from '../types/authenticated-request';
 
 @Controller('auth')
 export class AuthController {
@@ -49,24 +54,32 @@ export class AuthController {
 
   // Protected routes below (require valid JWT)
 
+  @Roles(ROLES.SUPER_ADMIN)
   @Post('register')
   create(@Body() createUserDto: CreateUserDto) {
     return this.authService.createUser(createUserDto);
   }
 
+  // Cada usuario solo modifica su propia cuenta (salvo Superadmin)
+  @Roles(ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.TECNICO)
   @Patch('configure/:id')
   async configureAccount(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: ConfigureAccountDto,
+    @Req() req: AuthenticatedRequest,
   ) {
+    assertSelfOrSuperadmin(req.user, id);
     return this.authService.configureAccount(id, dto);
   }
 
+  @Roles(ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.TECNICO)
   @Patch('setLogout/:id')
   async setSessionClosedAt(
     @Param('id', ParseUUIDPipe) userId: string,
     @Body('logout_at') logout_at: string,
+    @Req() req: AuthenticatedRequest,
   ) {
+    assertSelfOrSuperadmin(req.user, userId);
     return this.authService.setSessionClosedAt(userId, logout_at);
   }
 }

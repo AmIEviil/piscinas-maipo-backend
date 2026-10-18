@@ -13,8 +13,11 @@ import { RepairsService } from './repairs.service';
 import { CreateRepairDto, FilterRepairDto } from './dto/FilterRepair.dto';
 import { Repair } from './entities/repair.entity';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { ROLES } from '../auth/roles/roles.constants';
 
 @Controller('repairs')
+@Roles(ROLES.SUPER_ADMIN, ROLES.ADMIN)
 @UseGuards(JwtAuthGuard)
 export class RepairsController {
   constructor(private readonly repairsService: RepairsService) {}

@@ -25,6 +25,7 @@ import { ROLES } from '../auth/roles/roles.constants';
 import type { AuthenticatedRequest } from '../types/authenticated-request';
 
 @Controller('clients')
+@Roles(ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.TECNICO)
 @UseGuards(JwtAuthGuard)
 export class ClientsController {
   constructor(

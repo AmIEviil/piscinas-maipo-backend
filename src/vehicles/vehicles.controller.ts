@@ -12,8 +12,11 @@ import { VehiclesService } from './vehicles.service';
 import { Vehicle } from './entities/vehicle.entity';
 import { FilterVehiclesDto } from './dto/filterVehicles.dto';
 import { UploadedFiles } from '../uploaded-files/entities/uploaded-files.entity';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { ROLES } from '../auth/roles/roles.constants';
 
 @Controller('vehicles')
+@Roles(ROLES.SUPER_ADMIN)
 export class VehiclesController {
   private readonly logger = new Logger(VehiclesController.name);
 

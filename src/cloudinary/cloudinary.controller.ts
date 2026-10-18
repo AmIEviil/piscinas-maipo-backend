@@ -13,8 +13,11 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { CloudinaryService } from './cloudinary.service';
 import { AddImagesBulkDto } from './dto/create-images.dto';
 import { FileValidationPipe } from '../utils/file-validation.pipe';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { ROLES } from '../auth/roles/roles.constants';
 
 @Controller('upload')
+@Roles(ROLES.SUPER_ADMIN, ROLES.ADMIN)
 export class CloudinaryController {
   constructor(private readonly cloudinaryService: CloudinaryService) {}
 
