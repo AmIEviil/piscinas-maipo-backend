@@ -50,7 +50,9 @@ import { RolesGuard } from './auth/guards/roles.guard';
       database: process.env.DB_NAME,
       autoLoadEntities: true,
       synchronize: process.env.NODE_ENV !== 'production', // Solo en desarrollo
-      // migrationsRun: true,
+      // En produccion no hay synchronize y la imagen no trae ts-node para
+      // correr el CLI, asi que las migraciones pendientes se aplican al arrancar.
+      migrationsRun: process.env.NODE_ENV === 'production',
       extra: {
         max: 10,
         idleTimeoutMillis: 30000,
