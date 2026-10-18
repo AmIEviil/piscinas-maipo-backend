@@ -1,6 +1,7 @@
 import * as dotenv from 'dotenv';
 import { DataSource } from 'typeorm';
 import { Client } from './clients/entities/clients.entity';
+import { ClientHistory } from './clients/entities/client-history.entity';
 import { Product } from './products/entities/product.entity';
 import { ProductHistory } from './products/entities/product-history';
 import { Maintenance } from './maintenance/entities/maintenance.entity';
@@ -30,6 +31,7 @@ export const AppDataSource = new DataSource({
     Product,
     ProductHistory,
     Client,
+    ClientHistory,
     Maintenance,
     MaintenanceProduct,
     Revestimiento,
