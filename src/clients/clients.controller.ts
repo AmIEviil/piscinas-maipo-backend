@@ -74,8 +74,12 @@ export class ClientsController {
   }
 
   @Post('create')
-  create(@Body() client: CreateClientDto): Promise<Client> {
-    return this.clientService.createClient(client);
+  create(
+    @Body() client: CreateClientDto,
+    @Req() req: AuthenticatedRequest,
+  ): Promise<Client> {
+    const userId = req.user?.id ?? 'Unknown';
+    return this.clientService.createClient(client, userId);
   }
 
   @Put('update/:id')
@@ -110,7 +114,12 @@ export class ClientsController {
   }
 
   @Put('update-campos/:id')
-  updateCampo(@Param('id') id: string, @Body() dto: UpdateCampoDto[]) {
-    return this.clientService.updateCampo(id, dto);
+  updateCampo(
+    @Param('id') id: string,
+    @Body() dto: UpdateCampoDto[],
+    @Req() req: AuthenticatedRequest,
+  ) {
+    const userId = req.user?.id ?? 'Unknown';
+    return this.clientService.updateCampo(id, dto, userId);
   }
 }
