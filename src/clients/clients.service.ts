@@ -15,6 +15,13 @@ import { getValorCampoTipoExtendido } from '../utils/extendedLabel.utils';
 import { UpdateCampoDto } from './dto/Campos.dto';
 import { UpdateClientDto } from './dto/UpdateClient.dto';
 import { BulkUpdateClientsDto } from './dto/BulkUpdateClients.dto';
+import { BulkValorMantencionDto } from './dto/BulkValorMantencion.dto';
+import { ClientHistoryService } from './history/client-history.service';
+import {
+  diffSnapshots,
+  normalizarValor,
+  snapshotCliente,
+} from './history/client-history.utils';
 import {
   DIAS_SEMANA,
   aClaveFecha,
@@ -32,6 +39,8 @@ export class ClientsService {
     private readonly temporalidadRepository: Repository<MaintenanceTemporality>,
 
     private readonly observacionesService: ObservacionesService,
+
+    private readonly historyService: ClientHistoryService,
   ) {}
 
   private readonly tipoEntidad = 'client';
@@ -81,18 +90,24 @@ export class ClientsService {
     return this.temporalidadRepository.find({ order: { nombre: 'ASC' } });
   }
 
-  async createClient(client: CreateClientDto): Promise<Client> {
-    const newClient = this.clientRepository.create(client);
-    this.alinearFrecuencia(newClient, client.frecuencia_mantencion_id);
-    if (client.observacion) {
-      await this.observacionesService.createObservacion({
-        tipoEntidad: this.tipoEntidad,
-        registro_id: newClient.id,
-        detalle: client.observacion,
-        fecha: new Date(),
-      });
-    }
-    return this.clientRepository.save(newClient);
+  async createClient(client: CreateClientDto, userId: string): Promise<Client> {
+    return this.clientRepository.manager.transaction(async (manager) => {
+      const newClient = this.clientRepository.create(client);
+      this.alinearFrecuencia(newClient, client.frecuencia_mantencion_id);
+      const saved = await manager.save(Client, newClient);
+      await this.historyService.registrarCreacion(manager, saved.id, userId);
+      // Despues del save: antes el cliente aun no tenia id y la observacion
+      // quedaba con registro_id undefined.
+      if (client.observacion) {
+        await this.observacionesService.createObservacion({
+          tipoEntidad: this.tipoEntidad,
+          registro_id: saved.id,
+          detalle: client.observacion,
+          fecha: new Date(),
+        });
+      }
+      return saved;
+    });
   }
 
   /**
@@ -114,51 +129,81 @@ export class ClientsService {
 
   async update(
     id: string,
-    Client: UpdateClientDto,
+    dto: UpdateClientDto,
     userId: string,
   ): Promise<Client> {
-    const existing = await this.clientRepository.findOneBy({ id });
-    if (!existing) throw new NotFoundException('Client not found');
-    if (Client.observacion) {
-      await this.observacionesService.createObservacion({
-        tipoEntidad: this.tipoEntidad,
-        registro_id: id,
-        detalle: String(Client.observacion),
-        fecha: new Date(),
-        usuarioId: userId,
-      });
-    }
-
-    const updatedClient = this.clientRepository.merge(existing, Client);
-    this.alinearFrecuencia(updatedClient, Client.frecuencia_mantencion_id);
-    return this.clientRepository.save(updatedClient);
-  }
-
-  async updateCampo(user_id: string, dto: UpdateCampoDto[]) {
-    let camposActualizados = 0;
-    for (const campoDto of dto) {
-      const existing = await this.clientRepository.findOneBy({
-        id: user_id,
-      });
+    return this.clientRepository.manager.transaction(async (manager) => {
+      const existing = await manager.findOneBy(Client, { id });
       if (!existing) throw new NotFoundException('Client not found');
-      const updatedClient = this.clientRepository.merge(existing, {
-        [campoDto.campo]: campoDto.valor,
-      });
-      if (campoDto.campo === 'frecuencia_mantencion_id') {
-        this.alinearFrecuencia(updatedClient, String(campoDto.valor));
-      }
-      if (campoDto.campo === 'observacion') {
+      if (dto.observacion) {
         await this.observacionesService.createObservacion({
           tipoEntidad: this.tipoEntidad,
-          registro_id: user_id,
-          detalle: String(campoDto.valor),
+          registro_id: id,
+          detalle: String(dto.observacion),
           fecha: new Date(),
+          usuarioId: userId,
         });
       }
-      await this.clientRepository.save(updatedClient);
-      camposActualizados++;
-    }
-    return { camposActualizados };
+
+      const antes = snapshotCliente(existing);
+      const updatedClient = this.clientRepository.merge(existing, dto);
+      this.alinearFrecuencia(updatedClient, dto.frecuencia_mantencion_id);
+      await manager.save(Client, updatedClient);
+
+      // Se recarga para diffear contra lo que quedo en BD, incluida la
+      // frecuencia nueva (relacion eager), no contra lo que se intento escribir.
+      const recargado = await manager.findOneBy(Client, { id });
+      if (!recargado) throw new NotFoundException('Client not found');
+      await this.historyService.registrarCambios(
+        manager,
+        id,
+        diffSnapshots(antes, snapshotCliente(recargado)),
+        'ficha',
+        userId,
+      );
+      return recargado;
+    });
+  }
+
+  async updateCampo(clientId: string, dto: UpdateCampoDto[], userId: string) {
+    return this.clientRepository.manager.transaction(async (manager) => {
+      const existing = await manager.findOneBy(Client, { id: clientId });
+      if (!existing) throw new NotFoundException('Client not found');
+
+      // Un solo antes/despues para todo el arreglo: el historial refleja el
+      // resultado neto y no un paso por campo.
+      const antes = snapshotCliente(existing);
+      let camposActualizados = 0;
+      for (const campoDto of dto) {
+        this.clientRepository.merge(existing, {
+          [campoDto.campo]: campoDto.valor,
+        });
+        if (campoDto.campo === 'frecuencia_mantencion_id') {
+          this.alinearFrecuencia(existing, String(campoDto.valor));
+        }
+        if (campoDto.campo === 'observacion') {
+          await this.observacionesService.createObservacion({
+            tipoEntidad: this.tipoEntidad,
+            registro_id: clientId,
+            detalle: String(campoDto.valor),
+            fecha: new Date(),
+          });
+        }
+        camposActualizados++;
+      }
+      await manager.save(Client, existing);
+
+      const recargado = await manager.findOneBy(Client, { id: clientId });
+      if (!recargado) throw new NotFoundException('Client not found');
+      await this.historyService.registrarCambios(
+        manager,
+        clientId,
+        diffSnapshots(antes, snapshotCliente(recargado)),
+        'ficha',
+        userId,
+      );
+      return { camposActualizados };
+    });
   }
 
   /**
@@ -185,6 +230,8 @@ export class ClientsService {
       }
     }
 
+    // El historial guarda el nombre de la periodicidad, no su uuid.
+    let nombreFrecuencia: string | null = null;
     if (dto.campo === 'frecuencia_mantencion_id') {
       const frecuencia = await this.temporalidadRepository.findOneBy({
         id: valor,
@@ -192,11 +239,11 @@ export class ClientsService {
       if (!frecuencia) {
         throw new NotFoundException(`Periodicidad ${valor} no encontrada`);
       }
+      nombreFrecuencia = frecuencia.nombre;
     }
 
     const clientes = await this.clientRepository.find({
       where: { id: In(ids) },
-      select: { id: true },
     });
 
     if (clientes.length !== ids.length) {
@@ -211,12 +258,38 @@ export class ClientsService {
     // como null para no dejar cadenas vacias en la columna.
     const valorAGuardar = dto.campo === 'ruta' && valor === '' ? null : valor;
 
+    const claveHistorial =
+      dto.campo === 'frecuencia_mantencion_id'
+        ? 'frecuencia_mantencion'
+        : dto.campo;
+    const valorHistorial = normalizarValor(
+      dto.campo === 'frecuencia_mantencion_id'
+        ? nombreFrecuencia
+        : valorAGuardar,
+    );
+
     return this.clientRepository.manager.transaction(async (manager) => {
       await manager.update(
         Client,
         { id: In(ids) },
         { [dto.campo]: valorAGuardar },
       );
+
+      // Un registro por cliente y solo si su valor realmente cambia, dentro
+      // de la misma transaccion para que historial y datos no diverjan.
+      for (const cliente of clientes) {
+        const antes = snapshotCliente(cliente);
+        const despues = { ...antes, [claveHistorial]: valorHistorial };
+        const cambios = diffSnapshots(antes, despues);
+        if (cambios.length === 0) continue;
+        await this.historyService.registrarCambios(
+          manager,
+          cliente.id,
+          cambios,
+          'masivo',
+          userId,
+        );
+      }
 
       const mantencionesReprogramadas =
         dto.campo === 'dia_mantencion'
@@ -230,6 +303,75 @@ export class ClientsService {
         mantencionesReprogramadas,
         actualizadoPor: userId,
       };
+    });
+  }
+
+  /**
+   * Cambio masivo del valor de mantencion, con un valor propio por cliente.
+   *
+   * Es un endpoint aparte de `bulkUpdate` porque aqui cada cliente recibe un
+   * monto distinto (subida global mas overrides calculados en el front). Solo
+   * se escribe el cliente cuyo valor realmente cambia; las mantenciones ya
+   * registradas nunca se tocan: conservan el valor con que se hicieron.
+   */
+  async bulkUpdateValorMantencion(
+    dto: BulkValorMantencionDto,
+    userId: string,
+  ): Promise<{ clientesActualizados: number; sinCambios: number }> {
+    const ids = dto.items.map((item) => item.id);
+    if (new Set(ids).size !== ids.length) {
+      throw new BadRequestException('Hay clientes repetidos en la solicitud');
+    }
+
+    const clientes = await this.clientRepository.find({
+      where: { id: In(ids) },
+    });
+
+    if (clientes.length !== ids.length) {
+      const encontrados = new Set(clientes.map((cliente) => cliente.id));
+      const faltantes = ids.filter((id) => !encontrados.has(id));
+      throw new NotFoundException(
+        `Clientes no encontrados: ${faltantes.join(', ')}`,
+      );
+    }
+
+    const actualPorId = new Map(
+      clientes.map((cliente) => [cliente.id, cliente.valor_mantencion]),
+    );
+
+    return this.clientRepository.manager.transaction(async (manager) => {
+      let clientesActualizados = 0;
+      let sinCambios = 0;
+
+      for (const item of dto.items) {
+        const actual = actualPorId.get(item.id);
+        if (actual === item.valor) {
+          sinCambios++;
+          continue;
+        }
+        await manager.update(
+          Client,
+          { id: item.id },
+          { valor_mantencion: item.valor },
+        );
+        // Mismo manager que el UPDATE para que historial y dato no diverjan.
+        await this.historyService.registrarCambios(
+          manager,
+          item.id,
+          [
+            {
+              campo: 'valor_mantencion',
+              valorAnterior: normalizarValor(actual),
+              valorNuevo: normalizarValor(item.valor),
+            },
+          ],
+          'masivo',
+          userId,
+        );
+        clientesActualizados++;
+      }
+
+      return { clientesActualizados, sinCambios };
     });
   }
 

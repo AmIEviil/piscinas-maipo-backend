@@ -26,7 +26,9 @@ import { PagosModule } from './pagos/pagos.module';
 import { EmpleadosModule } from './empleados/empleados.module';
 import { VehiclesModule } from './vehicles/vehicles.module';
 import { MailModule } from './mail/mail.module';
+import { NotificationsModule } from './notifications/notifications.module';
 import { GlobalJwtAuthGuard } from './auth/guards/global-jwt-auth.guard';
+import { RolesGuard } from './auth/guards/roles.guard';
 
 @Module({
   imports: [
@@ -49,7 +51,9 @@ import { GlobalJwtAuthGuard } from './auth/guards/global-jwt-auth.guard';
       database: process.env.DB_NAME,
       autoLoadEntities: true,
       synchronize: process.env.NODE_ENV !== 'production', // Solo en desarrollo
-      // migrationsRun: true,
+      // En produccion no hay synchronize y la imagen no trae ts-node para
+      // correr el CLI, asi que las migraciones pendientes se aplican al arrancar.
+      migrationsRun: process.env.NODE_ENV === 'production',
       extra: {
         max: 10,
         idleTimeoutMillis: 30000,
@@ -76,11 +80,14 @@ import { GlobalJwtAuthGuard } from './auth/guards/global-jwt-auth.guard';
     EmpleadosModule,
     VehiclesModule,
     MailModule,
+    NotificationsModule,
   ],
   controllers: [AppController, ObservacionesController],
   providers: [
     AppService,
     { provide: APP_GUARD, useClass: GlobalJwtAuthGuard },
+    // Debe ir despues del JWT: necesita request.user ya cargado
+    { provide: APP_GUARD, useClass: RolesGuard },
     { provide: APP_GUARD, useClass: ThrottlerGuard },
   ],
 })

@@ -1,6 +1,7 @@
 import * as dotenv from 'dotenv';
 import { DataSource } from 'typeorm';
 import { Client } from './clients/entities/clients.entity';
+import { ClientHistory } from './clients/entities/client-history.entity';
 import { Product } from './products/entities/product.entity';
 import { ProductHistory } from './products/entities/product-history';
 import { Maintenance } from './maintenance/entities/maintenance.entity';
@@ -16,6 +17,7 @@ import { RoleUser } from './users/entities/role-user.entity';
 import { RevestimientoImagen } from './revestimientos/entities/revestimiento-imagen.entity';
 import { UploadedFiles } from './uploaded-files/entities/uploaded-files.entity';
 import { ComprobantePago } from './pagos/entities/comprobante-pago.entity';
+import { PushSubscriptionEntity } from './notifications/entities/push-subscription.entity';
 
 dotenv.config();
 
@@ -30,6 +32,7 @@ export const AppDataSource = new DataSource({
     Product,
     ProductHistory,
     Client,
+    ClientHistory,
     Maintenance,
     MaintenanceProduct,
     Revestimiento,
@@ -43,6 +46,7 @@ export const AppDataSource = new DataSource({
     RevestimientoImagen,
     UploadedFiles,
     ComprobantePago,
+    PushSubscriptionEntity,
   ],
   migrations: [__dirname + '/migrations/*{.ts,.js}'],
 });

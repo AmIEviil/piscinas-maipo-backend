@@ -11,8 +11,11 @@ import {
 import { EmpleadosService } from './empleados.service';
 import { FiltersEmployeesDto } from './dto/FiltersEmployees.dto';
 import { Employee } from './entities/empleado.entity';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { ROLES } from '../auth/roles/roles.constants';
 
 @Controller('empleados')
+@Roles(ROLES.SUPER_ADMIN)
 export class EmpleadosController {
   private readonly logger = new Logger(EmpleadosController.name);
 

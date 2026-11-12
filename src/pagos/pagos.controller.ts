@@ -13,8 +13,11 @@ import { PagosService } from './pagos.service';
 import { CreateComprobantePagoDto } from './dto/comprobante-pago.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { FileValidationPipe } from '../utils/file-validation.pipe';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { ROLES } from '../auth/roles/roles.constants';
 
 @Controller('pagos')
+@Roles(ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.TECNICO)
 export class PagosController {
   private readonly logger = new Logger(PagosController.name);
   constructor(private readonly pagosService: PagosService) {}
@@ -31,6 +34,7 @@ export class PagosController {
     return await this.pagosService.findOne(id);
   }
 
+  @Roles(ROLES.SUPER_ADMIN)
   @Post('/upload')
   @UseInterceptors(
     FileInterceptor('file', { limits: { fileSize: 10 * 1024 * 1024 } }),
@@ -64,6 +68,7 @@ export class PagosController {
     return this.pagosService.findByParentId(parentId);
   }
 
+  @Roles(ROLES.SUPER_ADMIN)
   @Delete(':id')
   async deleteComprobantePago(@Param('id') id: string) {
     this.logger.log(`Eliminando comprobante de pago con id: ${id}`);

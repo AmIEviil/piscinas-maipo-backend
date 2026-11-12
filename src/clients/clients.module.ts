@@ -10,14 +10,17 @@ import { Repair } from '../repairs/entities/repair.entity';
 import { Revestimiento } from '../revestimientos/entities/revestimiento.entity';
 import { MaintenanceTemporality } from './entities/frecuency-maintenance';
 import { Observaciones } from '../observaciones/entity/observaciones.entity';
+import { ClientHistory } from './entities/client-history.entity';
 import { ObservacionesService } from '../observaciones/observaciones.service';
+import { ClientHistoryService } from './history/client-history.service';
 
 @Module({
-  providers: [ClientsService, ObservacionesService],
+  providers: [ClientsService, ObservacionesService, ClientHistoryService],
   controllers: [ClientsController],
   imports: [
     TypeOrmModule.forFeature([
       Client,
+      ClientHistory,
       Maintenance,
       MaintenanceTemporality,
       MaintenanceProduct,

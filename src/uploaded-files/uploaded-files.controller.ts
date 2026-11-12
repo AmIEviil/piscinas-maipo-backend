@@ -1,7 +1,10 @@
 import { Controller, Get, Logger, Param } from '@nestjs/common';
 import { UploadedFilesService } from './uploaded-files.service';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { ROLES } from '../auth/roles/roles.constants';
 
 @Controller('uploaded-files')
+@Roles(ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.TECNICO)
 export class UploadedFilesController {
   private readonly logger = new Logger(UploadedFilesController.name);
 
