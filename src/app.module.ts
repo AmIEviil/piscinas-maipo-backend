@@ -26,6 +26,7 @@ import { PagosModule } from './pagos/pagos.module';
 import { EmpleadosModule } from './empleados/empleados.module';
 import { VehiclesModule } from './vehicles/vehicles.module';
 import { MailModule } from './mail/mail.module';
+import { NotificationsModule } from './notifications/notifications.module';
 import { GlobalJwtAuthGuard } from './auth/guards/global-jwt-auth.guard';
 import { RolesGuard } from './auth/guards/roles.guard';
 
@@ -79,6 +80,7 @@ import { RolesGuard } from './auth/guards/roles.guard';
     EmpleadosModule,
     VehiclesModule,
     MailModule,
+    NotificationsModule,
   ],
   controllers: [AppController, ObservacionesController],
   providers: [

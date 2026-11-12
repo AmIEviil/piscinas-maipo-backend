@@ -22,6 +22,7 @@ import { RevestimientosController } from '../../revestimientos/revestimientos.co
 import { UploadedFilesController } from '../../uploaded-files/uploaded-files.controller';
 import { UsersController } from '../../users/users.controller';
 import { VehiclesController } from '../../vehicles/vehicles.controller';
+import { NotificationsController } from '../../notifications/notifications.controller';
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 type Ctrl = Function;
@@ -48,6 +49,7 @@ const CONTROLLERS: Ctrl[] = [
   UploadedFilesController,
   UsersController,
   VehiclesController,
+  NotificationsController,
 ];
 
 function archivosController(dir: string): string[] {
