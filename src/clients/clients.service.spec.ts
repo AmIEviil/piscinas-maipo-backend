@@ -6,6 +6,7 @@ import { Client } from './entities/clients.entity';
 import { MaintenanceTemporality } from './entities/frecuency-maintenance';
 import { Maintenance } from '../maintenance/entities/maintenance.entity';
 import { ObservacionesService } from '../observaciones/observaciones.service';
+import { ClientHistoryService } from './history/client-history.service';
 import { aClaveFecha } from './utils/dias.utils';
 
 /** Gestor de entidades falso: registra los UPDATE que se le piden. */
@@ -37,6 +38,7 @@ describe('ClientsService.bulkUpdate', () => {
     manager: { transaction: jest.Mock };
   };
   let temporalidadRepo: { findOneBy: jest.Mock; find: jest.Mock };
+  let historial: { registrarCambios: jest.Mock; registrarCreacion: jest.Mock };
 
   const idsClientes = [
     '11111111-1111-1111-1111-111111111111',
@@ -48,7 +50,9 @@ describe('ClientsService.bulkUpdate', () => {
     clientRepo = {
       find: jest
         .fn()
-        .mockResolvedValue(idsClientes.map((id) => ({ id }) as Client)),
+        .mockResolvedValue(
+          idsClientes.map((id, i) => ({ id, ruta: `R${i + 1}` }) as Client),
+        ),
       findOneBy: jest.fn(),
       merge: jest.fn(),
       save: jest.fn(),
@@ -64,6 +68,11 @@ describe('ClientsService.bulkUpdate', () => {
       find: jest.fn(),
     };
 
+    historial = {
+      registrarCambios: jest.fn().mockResolvedValue(0),
+      registrarCreacion: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ClientsService,
@@ -76,6 +85,7 @@ describe('ClientsService.bulkUpdate', () => {
           provide: ObservacionesService,
           useValue: { createObservacion: jest.fn() },
         },
+        { provide: ClientHistoryService, useValue: historial },
       ],
     }).compile();
 
@@ -169,5 +179,339 @@ describe('ClientsService.bulkUpdate', () => {
       new Date(lunesProximo.getTime() + 4 * 24 * 60 * 60 * 1000),
     );
     expect(updateMantencion?.datos).toEqual({ fechaMantencion: esperada });
+  });
+
+  it('registra historial solo para los clientes cuyo valor cambia', async () => {
+    await service.bulkUpdate(
+      { ids: idsClientes, campo: 'ruta', valor: 'R2' },
+      'user-1',
+    );
+
+    expect(historial.registrarCambios).toHaveBeenCalledTimes(1);
+    expect(historial.registrarCambios).toHaveBeenCalledWith(
+      manager,
+      idsClientes[0],
+      [{ campo: 'ruta', valorAnterior: 'R1', valorNuevo: 'R2' }],
+      'masivo',
+      'user-1',
+    );
+  });
+
+  it('la periodicidad masiva se registra con el nombre, no el uuid', async () => {
+    await service.bulkUpdate(
+      { ids: idsClientes, campo: 'frecuencia_mantencion_id', valor: 'f1' },
+      'user-1',
+    );
+
+    expect(historial.registrarCambios).toHaveBeenCalledWith(
+      manager,
+      idsClientes[0],
+      [
+        {
+          campo: 'frecuencia_mantencion',
+          valorAnterior: null,
+          valorNuevo: 'Semanal',
+        },
+      ],
+      'masivo',
+      'user-1',
+    );
+  });
+
+  it('registra el historial con el manager de la transaccion', async () => {
+    await service.bulkUpdate(
+      { ids: idsClientes, campo: 'ruta', valor: 'Z' },
+      'user-1',
+    );
+
+    expect(historial.registrarCambios).toHaveBeenCalledTimes(2);
+    const llamadas = historial.registrarCambios.mock.calls as unknown[][];
+    for (const llamada of llamadas) {
+      expect(llamada[0]).toBe(manager);
+    }
+  });
+});
+
+describe('ClientsService historial', () => {
+  let service: ClientsService;
+  let manager: {
+    findOneBy: jest.Mock;
+    save: jest.Mock;
+  };
+  let clientRepo: {
+    create: jest.Mock;
+    merge: jest.Mock;
+    manager: { transaction: jest.Mock };
+  };
+  let historial: { registrarCambios: jest.Mock; registrarCreacion: jest.Mock };
+  let observaciones: { createObservacion: jest.Mock };
+
+  const id = '11111111-1111-1111-1111-111111111111';
+  const userId = '22222222-2222-2222-2222-222222222222';
+
+  beforeEach(async () => {
+    manager = {
+      findOneBy: jest.fn(),
+      save: jest.fn((_entidad: unknown, entidad: unknown) =>
+        Promise.resolve(entidad),
+      ),
+    };
+    clientRepo = {
+      create: jest.fn((datos: object) => ({ ...datos })),
+      merge: jest.fn(
+        (destino: object, ...origen: object[]) =>
+          Object.assign(destino, ...origen) as object,
+      ),
+      manager: {
+        transaction: jest.fn((cb: (m: unknown) => Promise<unknown>) =>
+          cb(manager),
+        ),
+      },
+    };
+    historial = {
+      registrarCambios: jest.fn().mockResolvedValue(0),
+      registrarCreacion: jest.fn().mockResolvedValue(undefined),
+    };
+    observaciones = { createObservacion: jest.fn() };
+
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        ClientsService,
+        { provide: getRepositoryToken(Client), useValue: clientRepo },
+        {
+          provide: getRepositoryToken(MaintenanceTemporality),
+          useValue: { findOneBy: jest.fn(), find: jest.fn() },
+        },
+        { provide: ObservacionesService, useValue: observaciones },
+        { provide: ClientHistoryService, useValue: historial },
+      ],
+    }).compile();
+
+    service = module.get<ClientsService>(ClientsService);
+  });
+
+  it('update registra solo los campos que cambiaron, con origen ficha y el userId', async () => {
+    manager.findOneBy
+      .mockResolvedValueOnce({ id, direccion: 'A', valor_mantencion: 23500 })
+      .mockResolvedValueOnce({ id, direccion: 'B', valor_mantencion: 23500 });
+
+    const resultado = await service.update(
+      id,
+      { direccion: 'B', valor_mantencion: 23500 } as never,
+      userId,
+    );
+
+    expect(historial.registrarCambios).toHaveBeenCalledWith(
+      manager,
+      id,
+      [{ campo: 'direccion', valorAnterior: 'A', valorNuevo: 'B' }],
+      'ficha',
+      userId,
+    );
+    expect(resultado).toMatchObject({ id, direccion: 'B' });
+  });
+
+  it('updateCampo con observacion no registra historial', async () => {
+    manager.findOneBy.mockResolvedValue({ id, direccion: 'A' });
+
+    await service.updateCampo(
+      id,
+      [{ campo: 'observacion', valor: 'texto' }] as never,
+      userId,
+    );
+
+    expect(observaciones.createObservacion).toHaveBeenCalledTimes(1);
+    // La observacion no es un campo auditado: el diff sale vacio.
+    expect(historial.registrarCambios).toHaveBeenCalledWith(
+      manager,
+      id,
+      [],
+      'ficha',
+      userId,
+    );
+  });
+
+  it('updateCampo aplica todos los campos en una sola transaccion', async () => {
+    manager.findOneBy
+      .mockResolvedValueOnce({ id, direccion: 'A', ruta: 'R1' })
+      .mockResolvedValueOnce({ id, direccion: 'B', ruta: 'R2' });
+
+    const resultado = await service.updateCampo(
+      id,
+      [
+        { campo: 'direccion', valor: 'B' },
+        { campo: 'ruta', valor: 'R2' },
+      ] as never,
+      userId,
+    );
+
+    expect(clientRepo.manager.transaction).toHaveBeenCalledTimes(1);
+    expect(resultado).toEqual({ camposActualizados: 2 });
+    expect(historial.registrarCambios).toHaveBeenCalledTimes(1);
+    const llamada = historial.registrarCambios.mock.calls[0] as unknown[];
+    const cambios = llamada[2] as Array<{
+      campo: string;
+    }>;
+    expect(cambios.map((c) => c.campo)).toEqual(['direccion', 'ruta']);
+  });
+
+  it('createClient registra la creacion con el userId', async () => {
+    manager.save.mockImplementation((_entidad: unknown, entidad: object) =>
+      Promise.resolve({ ...entidad, id }),
+    );
+
+    const creado = await service.createClient(
+      { nombre: 'Cliente', observacion: 'nota' } as never,
+      userId,
+    );
+
+    expect(creado.id).toBe(id);
+    expect(historial.registrarCreacion).toHaveBeenCalledWith(
+      manager,
+      id,
+      userId,
+    );
+    expect(observaciones.createObservacion).toHaveBeenCalledWith(
+      expect.objectContaining({ registro_id: id, detalle: 'nota' }),
+    );
+  });
+});
+
+describe('ClientsService.bulkUpdateValorMantencion', () => {
+  let service: ClientsService;
+  let manager: ReturnType<typeof crearManagerFalso>;
+  let clientRepo: { find: jest.Mock; manager: { transaction: jest.Mock } };
+  let historial: { registrarCambios: jest.Mock; registrarCreacion: jest.Mock };
+
+  const A = '11111111-1111-1111-1111-111111111111';
+  const B = '22222222-2222-2222-2222-222222222222';
+
+  beforeEach(async () => {
+    manager = crearManagerFalso();
+    clientRepo = {
+      find: jest.fn().mockResolvedValue([
+        { id: A, valor_mantencion: 23500 },
+        { id: B, valor_mantencion: 25000 },
+      ]),
+      manager: {
+        transaction: jest.fn((cb: (m: unknown) => Promise<unknown>) =>
+          cb(manager),
+        ),
+      },
+    };
+    historial = {
+      registrarCambios: jest.fn().mockResolvedValue(0),
+      registrarCreacion: jest.fn(),
+    };
+
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        ClientsService,
+        { provide: getRepositoryToken(Client), useValue: clientRepo },
+        {
+          provide: getRepositoryToken(MaintenanceTemporality),
+          useValue: { findOneBy: jest.fn(), find: jest.fn() },
+        },
+        {
+          provide: ObservacionesService,
+          useValue: { createObservacion: jest.fn() },
+        },
+        { provide: ClientHistoryService, useValue: historial },
+      ],
+    }).compile();
+
+    service = module.get<ClientsService>(ClientsService);
+  });
+
+  it('ids repetidos → BadRequestException y sin escrituras', async () => {
+    await expect(
+      service.bulkUpdateValorMantencion(
+        {
+          items: [
+            { id: A, valor: 25000 },
+            { id: A, valor: 26000 },
+          ],
+        },
+        'user-1',
+      ),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(clientRepo.manager.transaction).not.toHaveBeenCalled();
+    expect(manager.updates).toHaveLength(0);
+  });
+
+  it('id inexistente → NotFoundException con la lista, sin transaccion', async () => {
+    clientRepo.find.mockResolvedValue([{ id: A, valor_mantencion: 23500 }]);
+
+    await expect(
+      service.bulkUpdateValorMantencion(
+        {
+          items: [
+            { id: A, valor: 25000 },
+            { id: B, valor: 25000 },
+          ],
+        },
+        'user-1',
+      ),
+    ).rejects.toThrow(`Clientes no encontrados: ${B}`);
+    expect(clientRepo.manager.transaction).not.toHaveBeenCalled();
+    expect(manager.updates).toHaveLength(0);
+  });
+
+  it('actualiza solo los que cambian y cuenta sinCambios', async () => {
+    const resultado = await service.bulkUpdateValorMantencion(
+      {
+        items: [
+          { id: A, valor: 25000 },
+          { id: B, valor: 25000 },
+        ],
+      },
+      'user-1',
+    );
+
+    expect(manager.update).toHaveBeenCalledTimes(1);
+    expect(manager.update).toHaveBeenCalledWith(
+      Client,
+      { id: A },
+      { valor_mantencion: 25000 },
+    );
+    expect(resultado).toEqual({ clientesActualizados: 1, sinCambios: 1 });
+  });
+
+  it('registra historial valor_mantencion origen masivo para cada actualizado', async () => {
+    await service.bulkUpdateValorMantencion(
+      {
+        items: [
+          { id: A, valor: 25000 },
+          { id: B, valor: 25000 },
+        ],
+      },
+      'user-1',
+    );
+
+    expect(historial.registrarCambios).toHaveBeenCalledTimes(1);
+    expect(historial.registrarCambios).toHaveBeenCalledWith(
+      manager,
+      A,
+      [
+        {
+          campo: 'valor_mantencion',
+          valorAnterior: '23500',
+          valorNuevo: '25000',
+        },
+      ],
+      'masivo',
+      'user-1',
+    );
+  });
+
+  it('no toca Maintenance', async () => {
+    clientRepo.find.mockResolvedValue([{ id: A, valor_mantencion: 23500 }]);
+    await service.bulkUpdateValorMantencion(
+      { items: [{ id: A, valor: 30000 }] },
+      'user-1',
+    );
+
+    expect(manager.find).not.toHaveBeenCalled();
+    expect(manager.updates.every((u) => u.entidad === Client)).toBe(true);
   });
 });

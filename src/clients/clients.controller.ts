@@ -9,8 +9,8 @@ import {
   Query,
   UseGuards,
   Req,
+  ParseUUIDPipe,
 } from '@nestjs/common';
-import type { Request } from 'express';
 import { ClientsService } from './clients.service';
 import { Client } from './entities/clients.entity';
 import { CreateClientDto } from './dto/CreateClient.dto';
@@ -18,17 +18,20 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { UpdateCampoDto } from './dto/Campos.dto';
 import { UpdateClientDto } from './dto/UpdateClient.dto';
 import { BulkUpdateClientsDto } from './dto/BulkUpdateClients.dto';
-
-type AuthenticatedRequest = Request & {
-  user?: {
-    id?: string;
-  };
-};
+import { BulkValorMantencionDto } from './dto/BulkValorMantencion.dto';
+import { ClientHistoryService } from './history/client-history.service';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { ROLES } from '../auth/roles/roles.constants';
+import type { AuthenticatedRequest } from '../types/authenticated-request';
 
 @Controller('clients')
+@Roles(ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.TECNICO)
 @UseGuards(JwtAuthGuard)
 export class ClientsController {
-  constructor(private readonly clientService: ClientsService) {}
+  constructor(
+    private readonly clientService: ClientsService,
+    private readonly historyService: ClientHistoryService,
+  ) {}
 
   @Get()
   findAll(): Promise<Client[]> {
@@ -74,14 +77,28 @@ export class ClientsController {
     return this.clientService.findFrecuencias();
   }
 
+  /**
+   * Historial de cambios de un cliente. Declarada antes de `:id` por
+   * costumbre del archivo, aunque no compiten: tiene un segmento extra.
+   */
+  @Get(':id/historial')
+  @Roles(ROLES.SUPER_ADMIN, ROLES.ADMIN)
+  findHistorial(@Param('id', ParseUUIDPipe) id: string) {
+    return this.historyService.findByClient(id);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string): any {
     return this.clientService.findOne(id);
   }
 
   @Post('create')
-  create(@Body() client: CreateClientDto): Promise<Client> {
-    return this.clientService.createClient(client);
+  create(
+    @Body() client: CreateClientDto,
+    @Req() req: AuthenticatedRequest,
+  ): Promise<Client> {
+    const userId = req.user?.id ?? 'Unknown';
+    return this.clientService.createClient(client, userId);
   }
 
   @Put('update/:id')
@@ -107,6 +124,7 @@ export class ClientsController {
    * ningun ':id'.
    */
   @Put('bulk-update')
+  @Roles(ROLES.SUPER_ADMIN, ROLES.ADMIN)
   bulkUpdate(
     @Body() dto: BulkUpdateClientsDto,
     @Req() req: AuthenticatedRequest,
@@ -115,8 +133,24 @@ export class ClientsController {
     return this.clientService.bulkUpdate(dto, userId);
   }
 
+  /** Cambio masivo del valor de mantencion, un valor por cliente. */
+  @Put('bulk-valor-mantencion')
+  @Roles(ROLES.SUPER_ADMIN, ROLES.ADMIN)
+  bulkValorMantencion(
+    @Body() dto: BulkValorMantencionDto,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    const userId = req.user?.id ?? 'Unknown';
+    return this.clientService.bulkUpdateValorMantencion(dto, userId);
+  }
+
   @Put('update-campos/:id')
-  updateCampo(@Param('id') id: string, @Body() dto: UpdateCampoDto[]) {
-    return this.clientService.updateCampo(id, dto);
+  updateCampo(
+    @Param('id') id: string,
+    @Body() dto: UpdateCampoDto[],
+    @Req() req: AuthenticatedRequest,
+  ) {
+    const userId = req.user?.id ?? 'Unknown';
+    return this.clientService.updateCampo(id, dto, userId);
   }
 }

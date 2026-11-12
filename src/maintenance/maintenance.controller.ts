@@ -15,8 +15,11 @@ import {
   UpdateMaintenanceDto,
 } from './dto/CreateMaintenanceDto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { ROLES } from '../auth/roles/roles.constants';
 
 @Controller('maintenances')
+@Roles(ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.TECNICO)
 @UseGuards(JwtAuthGuard)
 export class MaintenanceController {
   constructor(private readonly maintenanceService: MaintenanceService) {}
@@ -40,6 +43,7 @@ export class MaintenanceController {
     return this.maintenanceService.update(id, maintenance);
   }
 
+  @Roles(ROLES.SUPER_ADMIN)
   @Delete(':id')
   remove(@Param('id') id: string): Promise<void> {
     return this.maintenanceService.remove(id);

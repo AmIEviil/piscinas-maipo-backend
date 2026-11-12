@@ -9,8 +9,8 @@ async function bootstrap() {
     origin: [
       process.env.FRONTEND_URL,
       'http://localhost:5173', // para desarrollo
-      'http://72.61.219.117', // sin slash final
-      'http://72.61.219.117:80', // opcional, por si accedes con puerto
+      'http://187.127.53.63', // sin slash final
+      'http://187.127.53.63:80', // opcional, por si accedes con puerto
     ],
     credentials: true,
   });
