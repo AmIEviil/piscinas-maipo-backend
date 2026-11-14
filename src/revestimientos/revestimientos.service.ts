@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Revestimiento } from './entities/revestimiento.entity';
 import { Repository } from 'typeorm';
@@ -65,17 +65,51 @@ export class RevestimientosService {
     return this.revestimientoRepository.save(newRevestimiento);
   }
 
+  /**
+   * Edicion de un revestimiento.
+   *
+   * - `clienteId` se traduce a la relacion `client`, igual que al crear (un
+   *   merge directo lo ignoraba y el cliente no se podia cambiar).
+   * - `extras`, si viene, REEMPLAZA la lista completa: se borran los
+   *   anteriores y se insertan los recibidos, en una transaccion. Con el
+   *   merge anterior un extra quitado en el formulario seguia en la base.
+   * - `imagenes` se ignora: las imagenes se agregan y quitan con sus propios
+   *   endpoints (`upload/revestimiento/:id/imagenes/bulk` y `upload/:id`).
+   */
   async updateRevestimiento(
     id: string,
     data: Partial<IRevestimientoCreate>,
   ): Promise<Revestimiento> {
-    const existing = await this.revestimientoRepository.findOneBy({ id });
-    if (!existing) throw new Error('Revestimiento not found');
-    const updatedRevestimiento = this.revestimientoRepository.merge(
-      existing,
-      data,
-    );
-    return this.revestimientoRepository.save(updatedRevestimiento);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { clienteId, extras, imagenes, ...campos } = data;
+
+    return this.revestimientoRepository.manager.transaction(async (manager) => {
+      const repo = manager.getRepository(Revestimiento);
+      const extraRepo = manager.getRepository(ExtraRevestimiento);
+
+      const existing = await repo.findOneBy({ id });
+      if (!existing) {
+        throw new NotFoundException(`Revestimiento con id ${id} no existe`);
+      }
+
+      repo.merge(existing, campos);
+      if (clienteId) {
+        existing.client = { id: clienteId } as Revestimiento['client'];
+      }
+
+      if (extras) {
+        await extraRepo.delete({ revestimiento: { id } });
+        existing.extras = extras.map((extra) =>
+          extraRepo.create({
+            nombre: extra.nombre,
+            valor: extra.valor,
+            detalle: extra.detalle,
+          }),
+        );
+      }
+
+      return repo.save(existing);
+    });
   }
 
   async deleteRevestimiento(id: string): Promise<void> {
