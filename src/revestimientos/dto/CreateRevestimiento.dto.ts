@@ -24,4 +24,5 @@ export interface IRevestimientoCreate {
   clienteId: string;
 
   imagenes: { url: string; public_id: string }[];
+  extras?: { nombre: string; valor: number; detalle: string }[];
 }
